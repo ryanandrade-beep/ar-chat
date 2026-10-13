@@ -1,0 +1,80 @@
+@startuml
+!pragma layout smetana
+!include skin.iuml
+title Diagrama de Classes — Cobrança, Fila e Enumerações
+hide empty members
+skinparam classAttributeIconSize 0
+
+class Cliente
+class Mensagem
+interface PlanoPagamento {
+  + validar(c : Cliente, custo : Decimal) : Boolean
+  + cobrar(c : Cliente, custo : Decimal) : Transacao
+}
+class PlanoPrePago
+class PlanoPosPago
+class FilaPrioridade {
+  - filaUrgente : Queue<Mensagem>
+  - filaNormal : Queue<Mensagem>
+  - urgentesSeguidas : Integer
+  - LIMITE_URGENTES : Integer = 3
+  + enfileirar(m : Mensagem) : void
+  + proxima() : Mensagem
+  + tamanho() : Integer
+}
+class WorkerFila {
+  - MAX_TENTATIVAS : Integer = 3
+  + processar() : void
+  - enviarPeloCanal(m : Mensagem) : ResultadoEnvio
+}
+
+enum TipoDocumento {
+  CPF
+  CNPJ
+}
+enum TipoPlano {
+  PRE_PAGO
+  POS_PAGO
+}
+enum Prioridade {
+  NORMAL
+  URGENTE
+}
+enum StatusMensagem {
+  ENFILEIRADA
+  PROCESSANDO
+  ENVIADA
+  ENTREGUE
+  LIDA
+  FALHA
+}
+enum StatusAtendimento {
+  AGUARDANDO
+  EM_ANDAMENTO
+  EM_ESPERA
+  FINALIZADO
+}
+enum TipoDestinatario {
+  CONTATO
+  GRUPO
+}
+enum TipoTransacao {
+  CREDITO
+  DEBITO
+  ESTORNO
+  AJUSTE_LIMITE
+}
+
+PlanoPagamento <|.. PlanoPrePago
+PlanoPagamento <|.. PlanoPosPago
+Cliente ..> PlanoPagamento : usa
+FilaPrioridade o-- "0..*" Mensagem
+WorkerFila --> FilaPrioridade : consome
+PlanoPrePago -[hidden]down- TipoDocumento
+PlanoPosPago -[hidden]down- TipoPlano
+Mensagem -[hidden]down- Prioridade
+Mensagem -[hidden]down- TipoDestinatario
+TipoDocumento -[hidden]down- StatusMensagem
+TipoPlano -[hidden]down- StatusAtendimento
+Prioridade -[hidden]down- TipoTransacao
+@enduml

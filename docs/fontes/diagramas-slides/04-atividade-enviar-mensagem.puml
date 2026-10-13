@@ -1,0 +1,51 @@
+@startuml
+!include skin.iuml
+|Cliente|
+start
+:Digitar o conteúdo da mensagem;
+:Selecionar a prioridade (normal ou urgente);
+:Acionar "Enviar";
+|Sistema|
+:Validar o token de autenticação;
+if (Token válido e cliente ativo?) then (não)
+  :Retornar erro 401/403;
+  |Cliente|
+  :Visualizar mensagem de erro;
+  stop
+else (sim)
+endif
+|Sistema|
+:Validar dados (conteúdo, conversa, prioridade);
+if (Dados válidos?) then (não)
+  :Retornar erro 422 com os campos inválidos;
+  |Cliente|
+  :Corrigir os dados;
+  stop
+else (sim)
+endif
+|Sistema|
+:Calcular custo (normal R$ 0,25 / urgente R$ 0,50);
+if (Tipo de plano?) then (pré-pago)
+  if (Saldo >= custo?) then (sim)
+    :Debitar o saldo;
+  else (não)
+    :Retornar erro 402 "Saldo insuficiente";
+    stop
+  endif
+else (pós-pago)
+  if (Consumo do mês + custo <= limite?) then (sim)
+    :Somar ao consumo do mês;
+  else (não)
+    :Retornar erro 402 "Limite excedido";
+    stop
+  endif
+endif
+:Registrar transação financeira;
+:Gravar mensagem com status "Enfileirada";
+:Inserir na fila conforme a prioridade;
+:Atualizar a conversa (última mensagem);
+:Retornar 201 com id, custo e saldo atual;
+|Cliente|
+:Visualizar mensagem com indicador "enfileirada";
+stop
+@enduml

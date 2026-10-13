@@ -1,0 +1,16 @@
+@startsalt
+title Protótipo — Seleção do Canal de Atendimento
+{+
+  <b>Conectar canal de atendimento</b>
+  Escolha por onde a sua empresa vai atender e disparar campanhas
+  .
+  {+
+    (X) <b>WhatsApp Web</b> | Conexão por QR Code (Z-API) | <color:green><b>Disponível</b></color>
+    ( ) <b>WhatsApp Business API</b> | API oficial da Meta | <color:gray><b>Em breve</b></color>
+  }
+  .
+  { Situação: <color:green>Conectado</color> · celular online }
+  .
+  { [Gerar QR Code] | [Desconectar] | [Fechar] }
+}
+@endsalt

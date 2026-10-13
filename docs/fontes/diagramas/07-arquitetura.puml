@@ -1,0 +1,40 @@
+@startuml
+!pragma layout smetana
+!include skin.iuml
+skinparam componentStyle rectangle
+skinparam ComponentBackgroundColor #F2F6FA
+skinparam ComponentBorderColor #2F5B85
+title Arquitetura do Sistema — A&R Chat
+node "Navegador" {
+  [Frontend React] as FE
+}
+node "Backend Java 21 / Spring Boot" {
+  package "apresentacao" {
+    [Controllers REST\n+ Swagger] as CT
+  }
+  package "aplicacao" {
+    [Casos de uso] as UC
+    [Portas (interfaces)] as PT
+  }
+  package "dominio" {
+    [Entidades e regras\nCliente, Mensagem, Plano,\nFilaPrioridade] as DM
+  }
+  package "infraestrutura" {
+    [Repositórios JPA] as JPA
+    [Fila em memória\n+ Worker] as FQ
+    [Envio simulado] as EV
+    [Token HMAC / BCrypt] as SEC
+  }
+}
+database "PostgreSQL 16" as DB
+FE --> CT : HTTP/JSON
+CT --> UC
+UC --> DM
+UC --> PT
+JPA ..|> PT
+FQ ..|> PT
+EV ..|> PT
+SEC ..|> PT
+JPA --> DB
+FQ --> UC : processa mensagens
+@enduml

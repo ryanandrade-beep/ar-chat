@@ -1,0 +1,33 @@
+@startuml
+!include skin.iuml
+skinparam maxMessageSize 160
+skinparam ParticipantPadding 4
+autonumber
+participant "Worker\nFila" as W
+participant "Fila\nPrioridade" as FQ
+participant "ProcessarMensagem\nUseCase" as UC
+database "Banco de\nDados" as DB
+participant "Canal\nWhatsApp" as Z
+participant "Webhook\nController" as WH
+participant "Frontend" as F
+
+loop enquanto houver mensagens
+  W -> FQ : proxima()
+  FQ --> W : mensagem (urgente primeiro; 1 normal a cada 3 urgentes)
+  W -> UC : executar(mensagem)
+  UC -> DB : status = processando
+  UC -> Z : enviar texto
+  alt canal aceitou
+    Z --> UC : id da mensagem no canal
+    UC -> DB : status = enviada
+  else falhou (tentativas < 3)
+    UC -> FQ : volta para a fila
+  else falhou na 3ª tentativa
+    UC -> DB : status = falha e estorno do valor
+  end
+end
+Z -> WH : aviso de entrega / leitura (webhook)
+WH -> DB : status = entregue / lida
+F -> DB : consulta o status (a cada poucos segundos)
+DB --> F : status atualizado (✓✓)
+@enduml

@@ -1,0 +1,14 @@
+@startuml
+!pragma layout smetana
+!include skin.iuml
+hide empty description
+[*] --> Enfileirada : envio validado\n(saldo/limite debitado)
+Enfileirada --> Processando : worker retira da fila
+Processando --> Enviada : envio simulado com sucesso
+Processando --> Enfileirada : erro e tentativas < 3\n/ reenfileira
+Processando --> Falha : erro e tentativas = 3\n/ estorna o custo
+Enviada --> Entregue : confirmação do destinatário
+Entregue --> Lida : destinatário abre a conversa
+Lida --> [*]
+Falha --> [*]
+@enduml

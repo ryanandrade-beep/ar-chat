@@ -1,0 +1,61 @@
+@startuml
+!pragma layout smetana
+!include skin.iuml
+left to right direction
+skinparam usecase {
+  BackgroundColor<<Cadastro>> #E3F0FB
+  BorderColor<<Cadastro>> #2F5B85
+  BackgroundColor<<Movimentação>> #FDEBD3
+  BorderColor<<Movimentação>> #B45309
+  BackgroundColor<<Relatório>> #E4F4E8
+  BorderColor<<Relatório>> #2F7D4F
+  BackgroundColor<<Apoio>> #F0F0F0
+  BorderColor<<Apoio>> #6B7280
+}
+hide stereotype
+actor "Cliente\n(Empresa)" as Cli
+actor "Administrador" as Adm
+rectangle "A&R Chat — atendimento e campanhas de marketing" {
+  usecase "UC01 Autenticar" <<Apoio>> as UC01
+  usecase "UC03 Cadastrar Destinatários\n(contatos e grupos)" <<Cadastro>> as UC03
+  usecase "UC05 Realizar Atendimento\n(responder, pausar, finalizar)" <<Movimentação>> as UC05
+  usecase "UC12 Disparar Campanha\nde Marketing" <<Movimentação>> as UC12
+  usecase "UC08 Relatório de\nAtendimentos Finalizados" <<Relatório>> as UC08
+  usecase "UC10 Relatório de\nDesempenho das Campanhas" <<Relatório>> as UC10
+  usecase "UC02 Cadastrar Clientes" <<Cadastro>> as UC02
+  usecase "UC04 Cadastrar Administradores" <<Cadastro>> as UC04
+  usecase "UC07 Movimentar Créditos\ne Limites" <<Movimentação>> as UC07
+  usecase "UC09 Relatório de\nFaturamento por Cliente" <<Relatório>> as UC09
+  usecase "UC11 Conectar Canal\n(WhatsApp Web; Business em breve)" <<Apoio>> as UC11
+  usecase "Validar Saldo/Limite" <<Apoio>> as VAL
+  usecase "Receber Mensagem\ndo Cliente Final" <<Apoio>> as REC
+  usecase "UC06 Processar\nFila de Envio" <<Apoio>> as UC06
+}
+actor "Canal WhatsApp\n(Z-API)\n<<comunicação>>" as Zap
+actor "Worker da Fila\n<<software>>" as Wrk
+Cli --> UC01
+Cli --> UC03
+Cli --> UC05
+Cli --> UC12
+Cli --> UC08
+Cli --> UC10
+Adm --> UC01
+Adm --> UC02
+Adm --> UC04
+Adm --> UC07
+Adm --> UC08
+Adm --> UC09
+Adm --> UC10
+Adm --> UC11
+UC05 ..> VAL : <<include>>
+UC12 ..> VAL : <<include>>
+REC ..> UC05 : <<extend>>
+REC <-- Zap
+UC06 <-- Wrk
+legend right
+  <back:#E3F0FB>   </back> Cadastro
+  <back:#FDEBD3>   </back> Movimentação
+  <back:#E4F4E8>   </back> Relatório
+  <back:#F0F0F0>   </back> Apoio
+endlegend
+@enduml

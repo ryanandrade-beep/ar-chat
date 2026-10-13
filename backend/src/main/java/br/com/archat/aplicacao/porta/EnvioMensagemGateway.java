@@ -1,0 +1,29 @@
+package br.com.archat.aplicacao.porta;
+
+import br.com.archat.dominio.mensagem.Prioridade;
+
+import java.util.UUID;
+
+/**
+ * Canal externo que entrega a mensagem ao destinatário (simulado ou WhatsApp via Z-API).
+ * Só é chamado depois que a mensagem já foi validada, cobrada e retirada da fila.
+ */
+public interface EnvioMensagemGateway {
+
+    ResultadoEnvio enviar(Envio envio);
+
+    record Envio(UUID mensagemId, String telefone, String conteudo, Prioridade prioridade, int tentativa) {
+    }
+
+    /** {@code idExterno}: identificador da mensagem no canal, usado depois pelos avisos de entrega e leitura. */
+    record ResultadoEnvio(boolean aceito, String idExterno) {
+
+        public static ResultadoEnvio aceito(String idExterno) {
+            return new ResultadoEnvio(true, idExterno);
+        }
+
+        public static ResultadoEnvio recusado() {
+            return new ResultadoEnvio(false, null);
+        }
+    }
+}

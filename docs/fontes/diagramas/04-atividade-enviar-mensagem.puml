@@ -1,0 +1,43 @@
+@startuml
+!include skin.iuml
+title Diagrama de Atividades — Enviar Resposta do Atendimento
+|Cliente|
+start
+:Digitar a mensagem e escolher
+a prioridade (normal ou urgente);
+:Acionar "Enviar";
+|Sistema|
+if (Token válido e
+cliente ativo?) then (não)
+  :Retornar erro 401/403;
+  stop
+else (sim)
+endif
+if (Dados válidos?) then (não)
+  :Retornar erro 422
+  com os campos inválidos;
+  stop
+else (sim)
+endif
+:Calcular o custo
+(normal R$ 0,25 / urgente R$ 0,50);
+if (Saldo (pré-pago) ou limite
+(pós-pago) suficiente?) then (não)
+  :Retornar erro 402
+  (saldo insuficiente ou
+  limite excedido);
+  stop
+else (sim)
+endif
+:Cobrar conforme o plano
+(debitar saldo ou somar consumo);
+:Registrar a transação financeira;
+:Gravar a mensagem como "Enfileirada"
+e inserir na fila pela prioridade;
+:Atualizar a conversa;
+:Retornar 201 com id, custo e saldo;
+|Cliente|
+:Visualizar a mensagem
+como "enfileirada";
+stop
+@enduml

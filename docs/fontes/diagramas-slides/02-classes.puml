@@ -1,0 +1,164 @@
+@startuml
+!pragma layout smetana
+!include skin.iuml
+hide empty members
+skinparam classAttributeIconSize 0
+
+enum TipoDocumento {
+  CPF
+  CNPJ
+}
+enum TipoPlano {
+  PRE_PAGO
+  POS_PAGO
+}
+enum Prioridade {
+  NORMAL
+  URGENTE
+}
+enum StatusMensagem {
+  ENFILEIRADA
+  PROCESSANDO
+  ENVIADA
+  ENTREGUE
+  LIDA
+  FALHA
+}
+enum StatusAtendimento {
+  AGUARDANDO
+  EM_ANDAMENTO
+  EM_ESPERA
+  FINALIZADO
+}
+enum TipoDestinatario {
+  CONTATO
+  GRUPO
+}
+enum TipoTransacao {
+  CREDITO
+  DEBITO
+  ESTORNO
+  AJUSTE_LIMITE
+}
+
+class Cliente {
+  - id : UUID
+  - nome : String
+  - documento : String
+  - tipoDocumento : TipoDocumento
+  - tipoPlano : TipoPlano
+  - saldo : Decimal
+  - limiteMensal : Decimal
+  - consumoMes : Decimal
+  - ativo : Boolean
+  + podeEnviar(custo : Decimal) : Boolean
+  + cobrar(custo : Decimal) : void
+  + estornar(valor : Decimal) : void
+}
+class Destinatario {
+  - id : UUID
+  - clienteId : UUID
+  - tipo : TipoDestinatario
+  - nome : String
+  - telefone : String
+  - aceitaOfertas : Boolean
+}
+class Campanha {
+  - id : UUID
+  - nome : String
+  - conteudo : String
+  - prioridade : Prioridade
+  - totalDestinatarios : Integer
+  - custoTotal : Decimal
+  - criadaEm : DateTime
+}
+class Conversa {
+  - id : UUID
+  - ultimaMensagem : String
+  - dataUltimaMensagem : DateTime
+  - naoLidas : Integer
+  - statusAtendimento : StatusAtendimento
+  + registrar(m : Mensagem) : void
+  + registrarRecebida(m : Mensagem) : void
+  + marcarComoLida() : void
+}
+class Mensagem {
+  - id : UUID
+  - conteudo : String
+  - prioridade : Prioridade
+  - status : StatusMensagem
+  - custo : Decimal
+  - tentativas : Integer
+  - idExterno : String
+  - criadaEm : DateTime
+  + iniciarProcessamento(agora) : void
+  + confirmarEnvio(idExterno, agora) : void
+  + confirmarEntrega(agora) : void
+  + confirmarLeitura(agora) : void
+  + registrarFalhaDeEnvio(maxTentativas, agora) : void
+}
+class Atendimento {
+  - id : UUID
+  - origem : OrigemAtendimento
+  - status : StatusAtendimento
+  - abertoEm : DateTime
+  - primeiraRespostaEm : DateTime
+  - finalizadoEm : DateTime
+  - mensagensEnviadas : Integer
+  - mensagensRecebidas : Integer
+  + registrarEnvio(agora) : void
+  + registrarRecebimento() : void
+  + colocarEmEspera() : void
+  + retomar() : void
+  + finalizar(agora) : void
+}
+class Transacao {
+  - id : UUID
+  - tipo : TipoTransacao
+  - valor : Decimal
+  - saldoApos : Decimal
+  - dataHora : DateTime
+}
+interface PlanoPagamento {
+  + validar(c : Cliente, custo : Decimal) : Boolean
+  + cobrar(c : Cliente, custo : Decimal) : Transacao
+}
+class PlanoPrePago
+class PlanoPosPago
+class FilaPrioridade {
+  - filaUrgente : Queue<Mensagem>
+  - filaNormal : Queue<Mensagem>
+  - urgentesSeguidas : Integer
+  - LIMITE_URGENTES : Integer = 3
+  + enfileirar(m : Mensagem) : void
+  + proxima() : Mensagem
+  + tamanho() : Integer
+}
+class WorkerFila {
+  - MAX_TENTATIVAS : Integer = 3
+  + processar() : void
+  - enviarPeloCanal(m : Mensagem) : ResultadoEnvio
+}
+class Administrador {
+  - id : UUID
+  - nome : String
+  - login : String
+  - senhaHash : String
+}
+
+Cliente "1" -- "0..*" Conversa
+Cliente "1" -- "0..*" Destinatario
+Destinatario "1" -- "0..1" Conversa
+Conversa "1" *-- "0..*" Mensagem
+Conversa "1" *-- "0..*" Atendimento : ciclos >
+Cliente "1" -- "0..*" Campanha
+Campanha "0..1" -- "1..*" Mensagem : gera >
+Cliente "1" -- "0..*" Transacao
+Mensagem "1" -- "0..*" Transacao : gera >
+PlanoPagamento <|.. PlanoPrePago
+PlanoPagamento <|.. PlanoPosPago
+Cliente ..> PlanoPagamento : usa
+FilaPrioridade o-- "0..*" Mensagem
+WorkerFila --> FilaPrioridade : consome
+Administrador ..> Cliente : gerencia
+@enduml

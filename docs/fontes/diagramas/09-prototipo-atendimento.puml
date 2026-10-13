@@ -1,0 +1,27 @@
+@startsalt
+title Protótipo — Tela de Atendimento
+{+
+  { <b>A&R Chat</b> | . | . | Saldo: <b>R$ 17,25</b> | [Sair] }
+  {/ <b>Aguardando (3)</b> | Em andamento (5) | Em espera (1) | Finalizados (12) }
+  {
+    {+
+      "Buscar conversa..."
+      <b>Joana</b> · 3 não lidas
+      Tem pão de queijo hoje?
+      ---
+      <b>Carlos</b> · 1 não lida
+      Meu pedido já saiu?
+      ---
+      <b>Grupo Clientes VIP</b>
+      Qual o horário de sábado?
+    } | {+
+      { <b>Joana</b> · Aguardando | [Em espera] | [Finalizar] }
+      ---
+      { . | Tem pão de queijo hoje? 09:12 }
+      { Tem sim, saindo do forno! 09:14 ✓✓ | . }
+      ---
+      { "Digite sua mensagem...            " | ( ) Urgente | [Enviar · R$ 0,25] }
+    }
+  }
+}
+@endsalt

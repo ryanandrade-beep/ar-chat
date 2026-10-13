@@ -1,0 +1,7 @@
+{
+  "name": "ar-chat-documentacao",
+  "private": true,
+  "description": "Gera o Documento de Projeto do A&R Chat (node gerar-documento.js)",
+  "scripts": { "documento": "node gerar-documento.js" },
+  "dependencies": { "docx": "^9.0.0" }
+}

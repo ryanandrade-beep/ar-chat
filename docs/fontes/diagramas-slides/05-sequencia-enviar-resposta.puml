@@ -1,0 +1,32 @@
+@startuml
+!include skin.iuml
+skinparam maxMessageSize 160
+skinparam ParticipantPadding 4
+autonumber
+actor "Empresa" as E
+participant "Frontend" as F
+participant "Mensagem\nController" as MC
+participant "EnviarMensagem\nUseCase" as UC
+participant "Cliente\n(plano)" as CL
+database "Banco de\nDados" as DB
+participant "Fila\nPrioridade" as FQ
+
+E -> F : escreve a resposta e clica em Enviar
+F -> MC : POST /messages
+MC -> UC : executar(comando)
+UC -> DB : buscar conversa e cliente (com bloqueio)
+UC -> CL : cobrar(custo)
+alt saldo ou limite insuficiente
+  CL --> UC : SaldoInsuficiente
+  UC --> MC : erro
+  MC --> F : 402
+  F --> E : "Saldo insuficiente"
+else saldo ou limite suficiente
+  CL --> UC : valor debitado
+  UC -> DB : grava mensagem, transação e atendimento (em andamento)
+  UC -> FQ : enfileirar(mensagem, prioridade)
+  UC --> MC : mensagem enfileirada
+  MC --> F : 201 (custo e saldo atual)
+  F --> E : mostra a mensagem "enfileirada"
+end
+@enduml

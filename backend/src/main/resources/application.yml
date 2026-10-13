@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: ar-chat-backend
+  config:
+    # credenciais locais (Z-API etc.) num arquivo .env fora do Git; vale rodando da raiz ou de backend/
+    import: "optional:file:.env[.properties],optional:file:../.env[.properties]"
+  datasource:
+    url: ${ARCHAT_DB_URL:jdbc:postgresql://localhost:5433/archat}
+    username: ${ARCHAT_DB_USUARIO:archat}
+    password: ${ARCHAT_DB_SENHA:archat}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+archat:
+  token:
+    segredo: ${ARCHAT_TOKEN_SEGREDO:troque-este-segredo-em-producao-0123456789}
+    validade: 12h
+  administrador-inicial:
+    nome: Administrador
+    login: ${ARCHAT_ADMIN_LOGIN:admin}
+    senha: ${ARCHAT_ADMIN_SENHA:admin12345}
+  fila:
+    workers: 2
+    maximo-tentativas: 3
+    urgentes-seguidas: 3
+    tempo-estimado-por-mensagem: 1s
+    atraso-confirmacao-entrega: 3s
+    # pausa por worker após cada envio; com a Z-API, use alguns segundos em disparos em massa
+    intervalo-entre-envios: ${ARCHAT_INTERVALO_ENTRE_ENVIOS:0ms}
+  envio:
+    # simulado (padrão, não precisa de credenciais) ou zapi (WhatsApp real via Z-API)
+    provedor: ${ARCHAT_ENVIO_PROVEDOR:simulado}
+  zapi:
+    url-base: ${ARCHAT_ZAPI_URL:https://api.z-api.io}
+    instancia: ${ARCHAT_ZAPI_INSTANCIA:}
+    token: ${ARCHAT_ZAPI_TOKEN:}
+    client-token: ${ARCHAT_ZAPI_CLIENT_TOKEN:}
+    timeout: 15s
+  webhook:
+    # parte secreta da URL dos webhooks (ex.: https://.../webhooks/zapi/<segredo>/received)
+    segredo: ${ARCHAT_WEBHOOK_SEGREDO:troque-este-segredo-do-webhook}
+  envio-simulado:
+    atraso-minimo: 300ms
+    atraso-maximo: 1200ms
+    taxa-falha: 0.1
+  origens-permitidas:
+    - http://localhost:5173
+    - http://localhost:3000

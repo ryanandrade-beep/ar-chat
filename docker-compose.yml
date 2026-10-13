@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: archat
+      POSTGRES_USER: archat
+      POSTGRES_PASSWORD: archat
+    ports:
+      - "5433:5432"
+    volumes:
+      - archat-dados-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U archat -d archat"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ARCHAT_DB_URL: jdbc:postgresql://postgres:5432/archat
+      ARCHAT_DB_USUARIO: archat
+      ARCHAT_DB_SENHA: archat
+      ARCHAT_TOKEN_SEGREDO: ${ARCHAT_TOKEN_SEGREDO:-troque-este-segredo-em-producao-0123456789}
+      ARCHAT_ADMIN_LOGIN: ${ARCHAT_ADMIN_LOGIN:-admin}
+      ARCHAT_ADMIN_SENHA: ${ARCHAT_ADMIN_SENHA:-admin12345}
+      # simulado (padrão) ou zapi; com zapi, preencha as variáveis abaixo no arquivo .env
+      ARCHAT_ENVIO_PROVEDOR: ${ARCHAT_ENVIO_PROVEDOR:-simulado}
+      ARCHAT_ZAPI_URL: ${ARCHAT_ZAPI_URL:-https://api.z-api.io}
+      ARCHAT_ZAPI_INSTANCIA: ${ARCHAT_ZAPI_INSTANCIA:-}
+      ARCHAT_ZAPI_TOKEN: ${ARCHAT_ZAPI_TOKEN:-}
+      ARCHAT_ZAPI_CLIENT_TOKEN: ${ARCHAT_ZAPI_CLIENT_TOKEN:-}
+      ARCHAT_WEBHOOK_SEGREDO: ${ARCHAT_WEBHOOK_SEGREDO:-troque-este-segredo-do-webhook}
+    ports:
+      - "8080:8080"
+
+volumes:
+  archat-dados-postgres:

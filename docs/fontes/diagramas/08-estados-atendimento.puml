@@ -1,0 +1,24 @@
+@startuml
+!pragma layout smetana
+!include skin.iuml
+title Diagrama de Estados — Atendimento
+hide empty description
+[*] --> Aguardando : cliente final envia mensagem
+[*] --> EmAndamento : empresa inicia a conversa
+state "Em andamento" as EmAndamento
+state "Em espera" as EmEspera
+Aguardando --> EmAndamento : empresa responde
+EmAndamento --> Aguardando : cliente final envia mensagem
+EmAndamento --> EmEspera : empresa coloca em espera
+Aguardando --> EmEspera : empresa coloca em espera
+EmEspera --> EmAndamento : empresa retoma ou responde
+EmEspera --> Aguardando : cliente final envia mensagem
+Aguardando --> Finalizado : empresa finaliza
+EmAndamento --> Finalizado : empresa finaliza
+EmEspera --> Finalizado : empresa finaliza
+Finalizado --> [*]
+note right of Finalizado
+  Nova mensagem do cliente final
+  abre um NOVO atendimento
+end note
+@enduml

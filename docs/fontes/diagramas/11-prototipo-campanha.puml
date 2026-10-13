@@ -1,0 +1,21 @@
+@startsalt
+title Protótipo — Nova Campanha de Marketing
+{+
+  <b>Nova campanha</b>  ·  Canal: WhatsApp Web
+  .
+  Nome           | "Ofertas da semana        "
+  Mensagem       | "Picanha R$ 49,90/kg só hoje!"
+  Prioridade     | ^Normal (R$ 0,25)^
+  .
+  <b>Destinatários</b> (somente quem aceitou receber ofertas)
+  {+
+    [X] Todos que aceitam ofertas (300)
+    [ ] Escolher contatos
+  }
+  .
+  { Custo: 300 × R$ 0,25 = <b>R$ 75,00</b> | Saldo após: R$ 25,00 }
+  <i>A cobrança é tudo ou nada: sem saldo para todas, nenhuma é enviada.</i>
+  .
+  { [Disparar campanha] | [Cancelar] }
+}
+@endsalt

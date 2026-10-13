@@ -1,0 +1,105 @@
+@startuml
+!pragma layout smetana
+!include skin.iuml
+title Diagrama de Entidade e Relacionamento — A&R Chat
+hide circle
+skinparam linetype ortho
+entity cliente {
+  * id : uuid <<PK>>
+  --
+  * nome : varchar(120)
+  * documento : varchar(14) <<UK>>
+  * tipo_documento : varchar(4)
+  * tipo_plano : varchar(10)
+  * saldo : numeric(12,2)
+  * limite_mensal : numeric(12,2)
+  * consumo_mes : numeric(12,2)
+  * ativo : boolean
+  * criado_em : timestamptz
+}
+entity destinatario {
+  * id : uuid <<PK>>
+  --
+  * cliente_id : uuid <<FK>>
+  * nome : varchar(120)
+  * telefone : varchar(40)
+  * tipo : varchar(10)
+  * aceita_ofertas : boolean
+}
+entity campanha {
+  * id : uuid <<PK>>
+  --
+  * cliente_id : uuid <<FK>>
+  * nome : varchar(120)
+  * conteudo : text
+  * prioridade : varchar(10)
+  * total_destinatarios : integer
+  * custo_total : numeric(12,2)
+  * criada_em : timestamptz
+}
+entity conversa {
+  * id : uuid <<PK>>
+  --
+  * cliente_id : uuid <<FK>>
+  * destinatario_id : uuid <<FK>>
+  ultima_mensagem : varchar(200)
+  data_ultima_mensagem : timestamptz
+  * nao_lidas : integer
+  * status_atendimento : varchar(12)
+}
+entity mensagem {
+  * id : uuid <<PK>>
+  --
+  * conversa_id : uuid <<FK>>
+  campanha_id : uuid <<FK>>
+  * remetente_tipo : varchar(12)
+  * conteudo : text
+  * prioridade : varchar(10)
+  * status : varchar(12)
+  * custo : numeric(5,2)
+  * tentativas : integer
+  id_externo : varchar(100) <<UK>>
+  * criada_em : timestamptz
+  atualizada_em : timestamptz
+}
+entity transacao {
+  * id : uuid <<PK>>
+  --
+  * cliente_id : uuid <<FK>>
+  mensagem_id : uuid <<FK>>
+  * tipo : varchar(15)
+  * valor : numeric(12,2)
+  * saldo_apos : numeric(12,2)
+  * data_hora : timestamptz
+}
+entity atendimento {
+  * id : uuid <<PK>>
+  --
+  * conversa_id : uuid <<FK>>
+  * cliente_id : uuid <<FK>>
+  * origem : varchar(13)
+  * status : varchar(12)
+  * aberto_em : timestamptz
+  primeira_resposta_em : timestamptz
+  finalizado_em : timestamptz
+  * mensagens_enviadas : integer
+  * mensagens_recebidas : integer
+}
+entity administrador {
+  * id : uuid <<PK>>
+  --
+  * nome : varchar(120)
+  * login : varchar(50) <<UK>>
+  * senha_hash : varchar(255)
+}
+cliente ||--o{ conversa
+cliente ||--o{ destinatario
+destinatario ||--o| conversa
+conversa ||--o{ mensagem
+cliente ||--o{ transacao
+mensagem |o--o{ transacao
+cliente ||--o{ campanha
+conversa ||--o{ atendimento
+cliente ||--o{ atendimento
+campanha |o--o{ mensagem
+@enduml
