@@ -93,7 +93,7 @@ public class GerenciarPlanosUseCase {
             if (!plano.ativo()) {
                 throw new RegraDeNegocioException("Plano inativo não pode receber novas assinaturas");
             }
-            long ativos = operadores.listarPorCliente(clienteId).stream().filter(Operador::ativo).count();
+            long ativos = operadores.listarPorCliente(clienteId).stream().filter(o -> o.ativo() && !o.dono()).count();
             if (ativos > plano.operadoresIncluidos()) {
                 throw new RegraDeNegocioException("A workspace tem %d operadores ativos; o plano inclui %d"
                         .formatted(ativos, plano.operadoresIncluidos()));

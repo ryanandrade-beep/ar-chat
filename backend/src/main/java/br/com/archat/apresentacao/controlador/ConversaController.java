@@ -100,7 +100,7 @@ class ConversaController {
     private static boolean responsavelConfere(UUID responsavel, String filtro, ClienteAutenticado cliente) {
         if (filtro == null || filtro.isBlank() || filtro.equals("all")) return true;
         if (filtro.equals("none")) return responsavel == null;
-        if (filtro.equals("me")) return responsavel != null && responsavel.equals(cliente.operadorId());
+        if (filtro.equals("me")) return responsavel != null && responsavel.equals(cliente.atendenteId());
         return responsavel != null && responsavel.toString().equals(filtro);
     }
 

@@ -429,6 +429,9 @@ class FluxoCompletoIT {
                 {"recipientId": "%s", "content": "Açaí pronto!", "priority": "urgent"}""".formatted(contato))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.cost").value(0.40));
+        executar(get("/conversations?assigned=me"), dono, null)
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].operatorName").value("Açaí da Praça"));
 
         executar(post("/operators"), dono, """
                 {"name": "Léo", "email": "leo@acai.com", "password": "atende2026"}""").andExpect(status().isCreated());
