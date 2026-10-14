@@ -7,6 +7,7 @@ import br.com.archat.aplicacao.mensagem.AtualizarStatusPeloCanalUseCase.AvisoDoC
 import br.com.archat.dominio.excecao.RegraDeNegocioException;
 import br.com.archat.dominio.mensagem.Midia;
 import br.com.archat.dominio.mensagem.TipoMidia;
+import br.com.archat.aplicacao.porta.InstanciaWhatsAppRepositorio;
 import br.com.archat.infraestrutura.config.ArChatPropriedades;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,6 +24,7 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Webhooks da Z-API (https://developer.z-api.io/webhooks/introduction), no formato da documentação:
@@ -41,8 +43,12 @@ class WebhookZApiController {
     private final AtualizarStatusPeloCanalUseCase atualizarStatus;
     private final byte[] segredo;
 
+    private final InstanciaWhatsAppRepositorio instancias;
+
     WebhookZApiController(ReceberMensagemUseCase receber, AtualizarStatusPeloCanalUseCase atualizarStatus,
-                          ArChatPropriedades propriedades) {
+                          ArChatPropriedades propriedades,
+                          InstanciaWhatsAppRepositorio instancias) {
+        this.instancias = instancias;
         this.receber = receber;
         this.atualizarStatus = atualizarStatus;
         this.segredo = propriedades.webhook().segredo().getBytes(StandardCharsets.UTF_8);
@@ -56,8 +62,9 @@ class WebhookZApiController {
             return Map.of("ignored", true);
         }
         Instant quando = corpo.momment() == null ? null : Instant.ofEpochMilli(corpo.momment());
-        boolean registrada = receber.doCanal(corpo.phone(), corpo.textoOuLegenda(), corpo.midia(), corpo.messageId(),
-                quando).isPresent();
+        UUID empresa = instancias.buscarPorInstancia(corpo.instanceId()).map(i -> i.clienteId()).orElse(null);
+        boolean registrada = receber.doCanal(empresa, corpo.phone(), corpo.textoOuLegenda(), corpo.midia(),
+                corpo.messageId(), quando).isPresent();
         if (!registrada) {
             log.info("Webhook Z-API: mensagem {} de {} ignorada (repetida ou contato não cadastrado)",
                     corpo.messageId(), corpo.phone());
@@ -86,7 +93,7 @@ class WebhookZApiController {
         }
     }
 
-    record RecebidaZApi(String type, String messageId, String phone, Boolean fromMe, Boolean isGroup,
+    record RecebidaZApi(String instanceId, String type, String messageId, String phone, Boolean fromMe, Boolean isGroup,
                         Long momment, String senderName, Texto text, Imagem image, Audio audio, Video video,
                         Documento document) {
 

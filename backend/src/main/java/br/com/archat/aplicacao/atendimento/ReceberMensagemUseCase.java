@@ -72,18 +72,25 @@ public class ReceberMensagemUseCase {
 
     public Optional<Mensagem> doCanal(String telefoneOuGrupo, String conteudo, Midia midia, String idExterno,
                                       Instant quando) {
+        return doCanal(null, telefoneOuGrupo, conteudo, midia, idExterno, quando);
+    }
+
+    public Optional<Mensagem> doCanal(UUID clienteId, String telefoneOuGrupo, String conteudo, Midia midia,
+                                      String idExterno, Instant quando) {
         if (idExterno != null && mensagens.buscarPorIdExterno(idExterno).isPresent()) {
             return Optional.empty();
         }
-        Optional<Registro> registro = unidadeDeTrabalho.executar(() -> conversaDoRemetente(telefoneOuGrupo)
+        Optional<Registro> registro = unidadeDeTrabalho.executar(() -> conversaDoRemetente(clienteId, telefoneOuGrupo)
                 .map(conversa -> registrar(conversa, conteudo, midia, idExterno,
                         quando == null ? relogio.instant() : quando)));
-        registro.ifPresent(r -> enviarRespostasDaUra(r.telefone(), r.respostasDaUra()));
+        registro.ifPresent(r -> enviarRespostasDaUra(r.clienteId(), r.telefone(), r.respostasDaUra()));
         return registro.map(Registro::mensagem);
     }
 
-    private Optional<Conversa> conversaDoRemetente(String telefoneOuGrupo) {
-        List<Destinatario> candidatos = destinatarios.buscarPorTelefones(variacoes(telefoneOuGrupo));
+    private Optional<Conversa> conversaDoRemetente(UUID clienteId, String telefoneOuGrupo) {
+        List<Destinatario> candidatos = destinatarios.buscarPorTelefones(variacoes(telefoneOuGrupo)).stream()
+                .filter(d -> clienteId == null || d.clienteId().equals(clienteId))
+                .toList();
         return candidatos.stream()
                 .map(d -> conversas.buscarPorDestinatario(d.id()).orElseGet(() -> Conversa.iniciar(d.clienteId(), d.id())))
                 .max(Comparator.comparing(c -> c.dataUltimaMensagem() == null ? Instant.EPOCH : c.dataUltimaMensagem()));
@@ -109,22 +116,22 @@ public class ReceberMensagemUseCase {
         List<String> respostas = ura == null || destinatario == null ? List.of()
                 : ura.aoReceber(conversa, destinatario, atendimento, mensagem, quando);
         conversas.salvar(conversa);
-        return new Registro(mensagem, destinatario == null ? null : destinatario.telefone(), respostas);
+        return new Registro(mensagem, conversa.clienteId(), destinatario == null ? null : destinatario.telefone(), respostas);
     }
 
-    private void enviarRespostasDaUra(String telefone, List<String> respostas) {
+    private void enviarRespostasDaUra(UUID clienteId, String telefone, List<String> respostas) {
         if (canal == null || telefone == null) {
             return;
         }
         for (String texto : respostas) {
             try {
-                canal.enviarAvisoDoSistema(telefone, texto);
+                canal.enviarAvisoDoSistema(clienteId, telefone, texto);
             } catch (RuntimeException e) {
                 return;
             }
         }
     }
 
-    private record Registro(Mensagem mensagem, String telefone, List<String> respostasDaUra) {
+    private record Registro(Mensagem mensagem, UUID clienteId, String telefone, List<String> respostasDaUra) {
     }
 }

@@ -501,7 +501,18 @@ class FluxoCompletoIT {
     void canaisMostramWhatsAppBusinessEmBreve() throws Exception {
         String admin = token(post("/admin/auth"), """
                 {"login": "admin", "password": "admin12345"}""");
-        executar(get("/channels"), admin, null)
+        String empresa = corpo(mvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content("""
+                {"name": "Floricultura Ipê", "email": "dono@ipe.com", "phone": "44922221111",
+                 "documentId": "47193945823", "documentType": "CPF", "password": "flores2026",
+                 "passwordConfirmation": "flores2026", "acceptTerms": true}""")), "$.token");
+        executar(get("/channels"), admin, null).andExpect(status().isForbidden());
+        executar(get("/whatsapp/qr-code"), admin, null).andExpect(status().isForbidden());
+        String clienteId = corpo(executar(get("/clients/me"), empresa, null), "$.id");
+        executar(put("/clients/" + clienteId + "/whatsapp-instance"), admin, """
+                {"instanceId": "3F4B2299E56411F97FFECA692CFECF87", "token": "4D6D0C717E997B6397E9C534"}""")
+                .andExpect(jsonPath("$.dedicated").value(true))
+                .andExpect(jsonPath("$.tokenMasked").value("4D6D…C534"));
+        executar(get("/channels"), empresa, null)
                 .andExpect(jsonPath("$[0].id").value("whatsapp_web"))
                 .andExpect(jsonPath("$[0].available").value(true))
                 .andExpect(jsonPath("$[1].id").value("whatsapp_business"))

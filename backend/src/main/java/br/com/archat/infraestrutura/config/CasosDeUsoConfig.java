@@ -48,6 +48,7 @@ import br.com.archat.aplicacao.porta.DepartamentoRepositorio;
 import br.com.archat.aplicacao.porta.DestinatarioRepositorio;
 import br.com.archat.aplicacao.porta.EnvioDeEmail;
 import br.com.archat.aplicacao.porta.EnvioMensagemGateway;
+import br.com.archat.aplicacao.porta.InstanciaWhatsAppRepositorio;
 import br.com.archat.aplicacao.porta.MensagemRepositorio;
 import br.com.archat.aplicacao.porta.MetricasFila;
 import br.com.archat.aplicacao.porta.OperadorRepositorio;
@@ -60,6 +61,7 @@ import br.com.archat.aplicacao.relatorio.RelatorioAtendimentosUseCase;
 import br.com.archat.aplicacao.relatorio.RelatorioCampanhasUseCase;
 import br.com.archat.aplicacao.relatorio.RelatorioFaturamentoUseCase;
 import br.com.archat.aplicacao.whatsapp.GerenciarConexaoWhatsAppUseCase;
+import br.com.archat.aplicacao.whatsapp.VincularInstanciaUseCase;
 import br.com.archat.infraestrutura.fila.FilaMensagensEmMemoria;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -283,6 +285,12 @@ class CasosDeUsoConfig {
     @Bean
     GuardarArquivoUseCase guardarArquivo(ArquivoRepositorio arquivos, UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio) {
         return new GuardarArquivoUseCase(arquivos, unidadeDeTrabalho, relogio);
+    }
+
+    @Bean
+    VincularInstanciaUseCase vincularInstancia(InstanciaWhatsAppRepositorio instancias, ClienteRepositorio clientes,
+                                               UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio) {
+        return new VincularInstanciaUseCase(instancias, clientes, unidadeDeTrabalho, relogio);
     }
 
     @Bean

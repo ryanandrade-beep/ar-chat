@@ -13,7 +13,7 @@ public interface EnvioMensagemGateway {
 
     ResultadoEnvio enviar(Envio envio);
 
-    record Envio(UUID mensagemId, String telefone, String conteudo, Midia midia, Prioridade prioridade,
+    record Envio(UUID mensagemId, UUID clienteId, String telefone, String conteudo, Midia midia, Prioridade prioridade,
                  int tentativa) {
     }
 
