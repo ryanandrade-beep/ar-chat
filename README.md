@@ -1,15 +1,16 @@
-# A&R Chat
+# A&R Chat — Backend
 
 Plataforma web para empresas **gerenciarem o atendimento aos clientes pelo WhatsApp** e **dispararem campanhas de
 marketing**. As conversas ficam numa tela única, separadas pelo status do atendimento (aguardando, em andamento,
 em espera e finalizado); cada mensagem enviada é cobrada (pré-pago ou pós-pago) e passa por uma fila com prioridade.
 
+O painel web fica no repositório [ar-chat-frontend](https://github.com/ryanandrade-beep/ar-chat-frontend).
+
 ## Estrutura do projeto
 
 ```
-ar-chat/
+ar-chat-backend/
 ├── backend/                      API REST — Java 21 + Spring Boot 4, arquitetura limpa
-├── frontend/                     Painel web — React + TypeScript + Vite
 ├── docs/
 │   ├── 01-documento/             Entrega do Documento Final até Especificações de Requisitos.docx
 │   ├── 02-apresentacao/          Apresentação do Estágio I (.pptx, modelo UMFG)
@@ -83,8 +84,8 @@ cd backend
 ```
 
 ```bash
-# 3. Painel web (outro terminal)
-cd frontend
+# 3. Painel web (outro terminal), no repositório ar-chat-frontend
+cd ../ar-chat-frontend
 npm install
 npm run dev      # http://localhost:5173 — crie uma conta em "Criar conta" ou entre como administrador
 ```
