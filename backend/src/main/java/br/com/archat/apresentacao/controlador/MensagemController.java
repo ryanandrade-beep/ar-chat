@@ -1,5 +1,6 @@
 package br.com.archat.apresentacao.controlador;
 
+import br.com.archat.aplicacao.atendimento.AtendimentoEmEquipeUseCase;
 import br.com.archat.aplicacao.mensagem.ConfirmarRecebimentoUseCase;
 import br.com.archat.aplicacao.mensagem.ConsultarMensagensUseCase;
 import br.com.archat.aplicacao.mensagem.EnviarMensagemUseCase;
@@ -37,8 +38,11 @@ class MensagemController {
     private final ConsultarMensagensUseCase consultar;
     private final ConfirmarRecebimentoUseCase confirmarRecebimento;
 
+    private final AtendimentoEmEquipeUseCase equipe;
+
     MensagemController(EnviarMensagemUseCase enviar, ConsultarMensagensUseCase consultar,
-                       ConfirmarRecebimentoUseCase confirmarRecebimento) {
+                       ConfirmarRecebimentoUseCase confirmarRecebimento, AtendimentoEmEquipeUseCase equipe) {
+        this.equipe = equipe;
         this.enviar = enviar;
         this.consultar = consultar;
         this.confirmarRecebimento = confirmarRecebimento;
@@ -49,6 +53,9 @@ class MensagemController {
     @Operation(summary = "Envia uma mensagem de texto ou com mídia (imagem, documento, áudio, vídeo): cobra o valor e coloca na fila (402 se faltar saldo/limite)")
     SendMessageResponse enviar(ClienteAutenticado cliente, @Valid @RequestBody SendMessageRequest r) {
         ApiEnums.exigirCanalDisponivel(r.channel());
+        if (cliente.operador() && r.conversationId() != null) {
+            equipe.exigirPodeResponder(cliente.id(), r.conversationId(), cliente.operadorId());
+        }
         return SendMessageResponse.de(enviar.executar(new EnviarMensagemUseCase.Comando(cliente.id(),
                 r.conversationId(), r.recipientId(), r.content(), MediaRequest.paraDominio(r.media()),
                 ApiEnums.prioridade(r.priority()), cliente.atendenteId(),

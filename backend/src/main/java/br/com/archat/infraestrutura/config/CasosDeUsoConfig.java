@@ -2,6 +2,7 @@ package br.com.archat.infraestrutura.config;
 
 import br.com.archat.aplicacao.administrador.GerenciarAdministradoresUseCase;
 import br.com.archat.aplicacao.arquivo.GuardarArquivoUseCase;
+import br.com.archat.aplicacao.atendimento.AtendimentoEmEquipeUseCase;
 import br.com.archat.aplicacao.atendimento.GerenciarAtendimentoUseCase;
 import br.com.archat.aplicacao.atendimento.ReceberMensagemUseCase;
 import br.com.archat.aplicacao.atendimento.RegistroDeAtendimento;
@@ -52,6 +53,7 @@ import br.com.archat.aplicacao.porta.InstanciaWhatsAppRepositorio;
 import br.com.archat.aplicacao.porta.MensagemRepositorio;
 import br.com.archat.aplicacao.porta.MetricasFila;
 import br.com.archat.aplicacao.porta.OperadorRepositorio;
+import br.com.archat.aplicacao.porta.ParticipanteRepositorio;
 import br.com.archat.aplicacao.porta.PlanoRepositorio;
 import br.com.archat.aplicacao.porta.ServicoToken;
 import br.com.archat.aplicacao.porta.TransacaoRepositorio;
@@ -291,6 +293,15 @@ class CasosDeUsoConfig {
     VincularInstanciaUseCase vincularInstancia(InstanciaWhatsAppRepositorio instancias, ClienteRepositorio clientes,
                                                UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio) {
         return new VincularInstanciaUseCase(instancias, clientes, unidadeDeTrabalho, relogio);
+    }
+
+    @Bean
+    AtendimentoEmEquipeUseCase atendimentoEmEquipe(ConversaRepositorio conversas, ParticipanteRepositorio participantes,
+                                                   OperadorRepositorio operadores, DepartamentoRepositorio departamentos,
+                                                   MensagemRepositorio mensagens, UnidadeDeTrabalho unidadeDeTrabalho,
+                                                   Clock relogio) {
+        return new AtendimentoEmEquipeUseCase(conversas, participantes, operadores, departamentos, mensagens,
+                unidadeDeTrabalho, relogio);
     }
 
     @Bean

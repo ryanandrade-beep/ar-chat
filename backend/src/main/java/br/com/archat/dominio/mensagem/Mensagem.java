@@ -25,6 +25,8 @@ public class Mensagem {
     private final Instant criadaEm;
     private Instant atualizadaEm;
     private boolean automatica;
+    private UUID operadorId;
+    private boolean interna;
     private ContatoCompartilhado contato;
 
     private Mensagem(UUID id, UUID conversaId, UUID campanhaId, Remetente remetente, String conteudo, Midia midia,
@@ -141,6 +143,31 @@ public class Mensagem {
         return this;
     }
 
+    public static Mensagem notaInterna(UUID conversaId, String texto, UUID operadorId, Instant agora) {
+        if (texto == null || texto.isBlank()) {
+            throw new RegraDeNegocioException("Escreva a nota");
+        }
+        if (texto.length() > TAMANHO_MAXIMO) {
+            throw new RegraDeNegocioException("A nota deve ter no máximo " + TAMANHO_MAXIMO + " caracteres");
+        }
+        Mensagem nota = new Mensagem(UUID.randomUUID(), conversaId, null, Remetente.CLIENTE, texto.strip(), null,
+                Prioridade.NORMAL, StatusMensagem.ENVIADA, BigDecimal.ZERO.setScale(2), 0, null, agora, agora);
+        nota.interna = true;
+        nota.operadorId = operadorId;
+        return nota;
+    }
+
+    public Mensagem escritaPor(UUID operadorId) {
+        this.operadorId = operadorId;
+        return this;
+    }
+
+    public Mensagem comAutoria(UUID operadorId, boolean interna) {
+        this.operadorId = operadorId;
+        this.interna = interna;
+        return this;
+    }
+
     public static Mensagem automatica(UUID conversaId, String texto, Instant agora) {
         Mensagem mensagem = new Mensagem(UUID.randomUUID(), conversaId, null, Remetente.CLIENTE, texto, null,
                 Prioridade.NORMAL, StatusMensagem.ENVIADA, BigDecimal.ZERO.setScale(2), 0, null, agora, agora);
@@ -222,6 +249,8 @@ public class Mensagem {
     public String conteudo() { return conteudo; }
     public Midia midia() { return midia; }
     public boolean automatica() { return automatica; }
+    public UUID operadorId() { return operadorId; }
+    public boolean interna() { return interna; }
     public ContatoCompartilhado contato() { return contato; }
     public Prioridade prioridade() { return prioridade; }
     public StatusMensagem status() { return status; }

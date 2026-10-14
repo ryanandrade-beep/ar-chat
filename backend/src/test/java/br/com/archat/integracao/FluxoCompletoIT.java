@@ -512,6 +512,59 @@ class FluxoCompletoIT {
     }
 
     @Test
+    void operadoresParticipamTrocamNotasETransferem() throws Exception {
+        String dono = corpo(mvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content("""
+                {"name": "Pet Shop Amigo", "email": "dono@amigo.com", "phone": "44911112222",
+                 "documentId": "73514628017", "documentType": "CPF", "password": "petshop2026",
+                 "passwordConfirmation": "petshop2026", "acceptTerms": true}""")), "$.token");
+        String clienteId = corpo(executar(get("/clients/me"), dono, null), "$.id");
+        String admin = token(post("/admin/auth"), """
+                {"login": "admin", "password": "admin12345"}""");
+        executar(post("/clients/" + clienteId + "/credits"), admin, """
+                {"amount": 10}""").andExpect(status().isOk());
+        executar(post("/operators"), dono, """
+                {"name": "Rita", "email": "rita@amigo.com", "password": "atende2026"}""").andExpect(status().isCreated());
+        String paulo = corpo(executar(post("/operators"), dono, """
+                {"name": "Paulo", "email": "paulo@amigo.com", "password": "atende2026"}"""), "$.id");
+        String banho = corpo(executar(post("/departments"), dono, """
+                {"name": "Banho e Tosa"}"""), "$.id");
+        String rita = token(post("/auth/login"), """
+                {"email": "rita@amigo.com", "password": "atende2026"}""");
+        String pauloToken = token(post("/auth/login"), """
+                {"email": "paulo@amigo.com", "password": "atende2026"}""");
+
+        String contato = corpo(executar(post("/recipients"), rita, """
+                {"name": "Dona Célia", "phone": "5544977778888"}"""), "$.id");
+        String conversa = corpo(executar(post("/messages"), rita, """
+                {"recipientId": "%s", "content": "O Thor já está pronto!", "priority": "normal"}""".formatted(contato))
+                .andExpect(status().isCreated()), "$.conversationId");
+
+        String resposta = """
+                {"conversationId": "%s", "content": "Pode buscar até 18h", "priority": "normal"}""".formatted(conversa);
+        executar(post("/messages"), pauloToken, resposta).andExpect(status().isUnprocessableEntity());
+        executar(post("/conversations/" + conversa + "/join"), pauloToken, null)
+                .andExpect(jsonPath("$.participants[0].name").value("Paulo"));
+        executar(post("/messages"), pauloToken, resposta).andExpect(status().isCreated());
+        executar(get("/conversations?assigned=me"), pauloToken, null).andExpect(jsonPath("$.length()").value(1));
+
+        executar(post("/conversations/" + conversa + "/notes"), rita, """
+                {"content": "Paulo, confirma o horário com a tosa?"}""")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.internal").value(true))
+                .andExpect(jsonPath("$.cost").value(0));
+
+        executar(post("/conversations/" + conversa + "/transfer"), rita, """
+                {"operatorId": "%s", "departmentId": "%s", "note": "Cliente quer agendar tosa"}""".formatted(paulo, banho))
+                .andExpect(jsonPath("$.operatorName").value("Paulo"))
+                .andExpect(jsonPath("$.departmentName").value("Banho e Tosa"))
+                .andExpect(jsonPath("$.participants.length()").value(0));
+        executar(get("/conversations/" + conversa + "/messages"), dono, null)
+                .andExpect(jsonPath("$[-1].internal").value(true))
+                .andExpect(jsonPath("$[-1].content").value(
+                        "Transferido para o departamento Banho e Tosa e para Paulo por Rita: Cliente quer agendar tosa"));
+    }
+
+    @Test
     void canaisMostramWhatsAppBusinessEmBreve() throws Exception {
         String admin = token(post("/admin/auth"), """
                 {"login": "admin", "password": "admin12345"}""");

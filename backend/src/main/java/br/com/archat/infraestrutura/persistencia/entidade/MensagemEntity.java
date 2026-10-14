@@ -58,6 +58,10 @@ public class MensagemEntity {
     @Column(name = "contato_telefone")
     private String contatoTelefone;
 
+    @Column(name = "operador_id")
+    private UUID operadorId;
+    private boolean interna;
+
     protected MensagemEntity() {
     }
 
@@ -102,6 +106,14 @@ public class MensagemEntity {
     }
 
     public boolean isAutomatica() { return automatica; }
+
+    public void definirAutoria(UUID operadorId, boolean interna) {
+        this.operadorId = operadorId;
+        this.interna = interna;
+    }
+
+    public UUID getOperadorId() { return operadorId; }
+    public boolean isInterna() { return interna; }
 
     public void definirContato(ContatoCompartilhado contato) {
         this.contatoNome = contato == null ? null : contato.nome();

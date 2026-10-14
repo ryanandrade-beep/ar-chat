@@ -85,6 +85,7 @@ public class EnviarMensagemUseCase {
                     : Mensagem.novaDoCliente(conversa.id(), null, comando.conteudo(), comando.midia(),
                             comando.prioridade(), preco, agora);
 
+            mensagem.escritaPor(comando.operadorId());
             cliente.cobrar(mensagem.custo());
             conversa.registrar(mensagem);
             conversa.assumirSeLivre(comando.operadorId());
