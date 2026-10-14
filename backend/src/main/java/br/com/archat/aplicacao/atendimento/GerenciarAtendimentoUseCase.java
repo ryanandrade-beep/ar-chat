@@ -52,7 +52,6 @@ public class GerenciarAtendimentoUseCase {
         });
     }
 
-    /** Quantidade de conversas em cada status, para as abas da tela de atendimento. */
     public Map<StatusAtendimento, Long> resumo(UUID clienteId) {
         Map<StatusAtendimento, Long> resumo = new EnumMap<>(StatusAtendimento.class);
         for (StatusAtendimento status : StatusAtendimento.values()) {

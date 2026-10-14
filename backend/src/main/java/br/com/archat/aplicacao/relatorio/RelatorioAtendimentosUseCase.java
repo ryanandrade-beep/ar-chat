@@ -39,7 +39,6 @@ public class RelatorioAtendimentosUseCase {
         this.fuso = fuso;
     }
 
-    /** Com {@code clienteId} nulo, considera os atendimentos de todos os clientes. */
     public RelatorioAtendimentos emitir(UUID clienteId, Periodo periodo) {
         List<Atendimento> finalizados = atendimentos.listarFinalizados(clienteId, periodo.de(), periodo.ate());
         Map<UUID, Destinatario> destinatarioPorConversa = destinatariosDasConversas(finalizados);
@@ -81,10 +80,6 @@ public class RelatorioAtendimentosUseCase {
     public record AtendimentoFinalizado(Atendimento atendimento, String destinatario) {
     }
 
-    /**
-     * {@code tempoMedioPrimeiraResposta} considera só os atendimentos iniciados pelo cliente final;
-     * fica nulo quando não há nenhum. {@code mediaMensagens} soma enviadas e recebidas.
-     */
     public record RelatorioAtendimentos(Periodo periodo, List<AtendimentoFinalizado> atendimentos, long total,
                                         long iniciadosPeloCliente, Duration tempoMedioPrimeiraResposta,
                                         Duration duracaoMedia, double mediaMensagens, Map<LocalDate, Long> porDia) {

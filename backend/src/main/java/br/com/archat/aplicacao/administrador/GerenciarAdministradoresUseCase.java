@@ -54,7 +54,6 @@ public class GerenciarAdministradoresUseCase {
         });
     }
 
-    /** Cria o primeiro administrador quando ainda não há nenhum, para a plataforma poder ser usada. */
     public boolean criarInicialSeNecessario(String nome, String login, String senha) {
         if (administradores.contar() > 0) {
             return false;

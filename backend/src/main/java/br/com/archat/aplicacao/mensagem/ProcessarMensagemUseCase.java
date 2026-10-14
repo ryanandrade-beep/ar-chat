@@ -56,7 +56,6 @@ public class ProcessarMensagemUseCase {
         this.maximoTentativas = maximoTentativas;
     }
 
-    /** Retorna o status final da mensagem, ou vazio se ela não estava mais aguardando envio. */
     public Optional<StatusMensagem> executar(UUID mensagemId) {
         Optional<Mensagem> emProcessamento = iniciarProcessamento(mensagemId);
         if (emProcessamento.isEmpty()) {

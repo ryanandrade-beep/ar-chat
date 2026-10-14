@@ -42,7 +42,6 @@ public class ReceberMensagemUseCase {
         this.relogio = relogio;
     }
 
-    /** Simulação para testes e demonstração: o cliente final "responde" na conversa informada. */
     public Mensagem simularResposta(UUID clienteId, UUID conversaId, String conteudo) {
         return unidadeDeTrabalho.executar(() -> {
             Conversa conversa = conversas.buscarPorId(conversaId)
@@ -52,11 +51,6 @@ public class ReceberMensagemUseCase {
         });
     }
 
-    /**
-     * Mensagem que chegou pelo canal (webhook). O número é procurado entre os destinatários cadastrados;
-     * se mais de um cliente tiver o mesmo contato, vai para a conversa com atividade mais recente.
-     * Mensagens repetidas (mesmo idExterno) e de números não cadastrados são ignoradas.
-     */
     public Optional<Mensagem> doCanal(String telefoneOuGrupo, String conteudo, String idExterno, Instant quando) {
         if (idExterno != null && mensagens.buscarPorIdExterno(idExterno).isPresent()) {
             return Optional.empty();
@@ -72,7 +66,6 @@ public class ReceberMensagemUseCase {
                 .max(Comparator.comparing(c -> c.dataUltimaMensagem() == null ? Instant.EPOCH : c.dataUltimaMensagem()));
     }
 
-    /** O mesmo contato pode estar cadastrado com ou sem o DDI 55. */
     private static Set<String> variacoes(String telefoneOuGrupo) {
         String valor = telefoneOuGrupo == null ? "" : telefoneOuGrupo.strip().toLowerCase();
         Set<String> variacoes = new LinkedHashSet<>();

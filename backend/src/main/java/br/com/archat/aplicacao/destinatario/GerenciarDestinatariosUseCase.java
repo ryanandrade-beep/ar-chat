@@ -33,7 +33,6 @@ public class GerenciarDestinatariosUseCase {
         return doCliente(clienteId, destinatarioId);
     }
 
-    /** {@code telefone} é o número do contato ou, para grupos, o ID do grupo no WhatsApp. */
     public Destinatario cadastrar(UUID clienteId, TipoDestinatario tipo, String nome, String telefone,
                                   boolean aceitaOfertas) {
         Destinatario destinatario = Destinatario.novo(clienteId, tipo, nome, telefone, aceitaOfertas);

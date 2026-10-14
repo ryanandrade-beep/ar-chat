@@ -109,7 +109,6 @@ public class RelatorioFaturamentoUseCase {
         }
     }
 
-    /** {@code participacao}: % da receita líquida total da plataforma no período. */
     public record FaturamentoDoCliente(UUID clienteId, String nome, TipoPlano tipoPlano, long mensagens,
                                        long urgentes, BigDecimal percentualUrgentes, BigDecimal receitaBruta,
                                        BigDecimal estornos, BigDecimal receitaLiquida, BigDecimal ticketMedio,

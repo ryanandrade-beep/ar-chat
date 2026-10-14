@@ -83,7 +83,6 @@ class WebhookZApiController {
         }
     }
 
-    /** Campos usados do webhook "Ao receber" da Z-API. */
     record RecebidaZApi(String type, String messageId, String phone, Boolean fromMe, Boolean isGroup,
                         Long momment, String senderName, Texto text) {
 
@@ -91,7 +90,6 @@ class WebhookZApiController {
         }
     }
 
-    /** Campos usados do webhook "Status da mensagem" da Z-API. */
     record StatusZApi(String type, String status, List<String> ids, String phone, Boolean isGroup) {
     }
 }

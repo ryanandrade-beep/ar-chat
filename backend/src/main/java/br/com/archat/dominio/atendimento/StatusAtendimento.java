@@ -4,13 +4,9 @@ import java.util.Set;
 
 /** Estados de um atendimento e as transições permitidas entre eles. */
 public enum StatusAtendimento {
-    /** O cliente final escreveu e a empresa ainda não respondeu. */
     AGUARDANDO,
-    /** A empresa está atendendo. */
     EM_ANDAMENTO,
-    /** Atendimento pausado pela empresa (ex.: verificando um pedido). */
     EM_ESPERA,
-    /** Atendimento encerrado. Uma nova mensagem do cliente abre outro atendimento. */
     FINALIZADO;
 
     public boolean podeIrPara(StatusAtendimento destino) {

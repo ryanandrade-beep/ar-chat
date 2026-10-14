@@ -10,7 +10,6 @@ public final class ConversaDtos {
     private ConversaDtos() {
     }
 
-    /** {@code status}: waiting · in_progress · on_hold · finished (status do atendimento da conversa). */
     public record ConversationResponse(UUID id, UUID recipientId, String recipientName, String recipientPhone,
                                        String recipientType, String status, String lastMessageContent,
                                        Instant lastMessageTime, int unreadCount) {

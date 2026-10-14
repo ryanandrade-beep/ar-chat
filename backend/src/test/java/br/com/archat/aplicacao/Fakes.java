@@ -139,7 +139,6 @@ final class Fakes {
         public boolean existeParaDestinatario(UUID destinatarioId) { return false; }
         public Map<StatusMensagem, Long> contarPorStatus() { return Map.of(); }
         public Map<StatusMensagem, Long> contarPorStatusDaCampanha(UUID campanhaId) { return Map.of(); }
-        /** Preenchidos pelos testes de relatório. */
         List<ContagemPorCliente> contagensPorCliente = new ArrayList<>();
         Map<UUID, Map<StatusMensagem, Long>> contagensPorCampanha = new HashMap<>();
         public List<ContagemPorCliente> contarPorCliente(Instant de, Instant ate) { return contagensPorCliente; }
@@ -178,7 +177,6 @@ final class Fakes {
         public int tamanho(Prioridade prioridade) { return itens.size(); }
     }
 
-    /** Canal que responde conforme a sequência programada (true = sucesso). */
     static class EnvioProgramado implements EnvioMensagemGateway {
         final Deque<Boolean> respostas = new ArrayDeque<>();
         final List<Envio> recebidos = new ArrayList<>();

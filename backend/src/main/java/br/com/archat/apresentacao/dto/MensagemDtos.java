@@ -15,8 +15,6 @@ public final class MensagemDtos {
     private MensagemDtos() {
     }
 
-    /** Informe {@code conversationId} ou {@code recipientId}; {@code priority} é normal ou urgent. */
-    /** {@code channel}: whatsapp_web (padrão); whatsapp_business ainda não está disponível. */
     public record SendMessageRequest(UUID conversationId, UUID recipientId,
                                      @NotBlank @Size(max = Mensagem.TAMANHO_MAXIMO) String content,
                                      @NotBlank String priority, String channel) {

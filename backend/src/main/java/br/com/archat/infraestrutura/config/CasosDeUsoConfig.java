@@ -165,7 +165,6 @@ class CasosDeUsoConfig {
         return new RecuperarFilaUseCase(mensagens, fila, unidadeDeTrabalho, relogio);
     }
 
-    /** Fuso usado para agrupar os relatórios por dia. */
     @Bean
     ZoneId fusoDosRelatorios() {
         return ZoneId.of("America/Sao_Paulo");

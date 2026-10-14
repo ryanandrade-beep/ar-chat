@@ -24,12 +24,10 @@ public class ConsultarConversasUseCase {
         this.destinatarios = destinatarios;
     }
 
-    /** Conversas do cliente, da mais recente para a mais antiga, filtradas pelo nome do destinatário. */
     public List<ResumoConversa> listar(UUID clienteId, String busca) {
         return listar(clienteId, busca, null);
     }
 
-    /** Com {@code status} informado, só as conversas cujo atendimento está nesse status. */
     public List<ResumoConversa> listar(UUID clienteId, String busca, StatusAtendimento status) {
         List<Conversa> doCliente = conversas.listarPorCliente(clienteId).stream()
                 .filter(c -> status == null || c.statusAtendimento() == status)

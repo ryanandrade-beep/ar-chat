@@ -44,7 +44,6 @@ public record Campanha(UUID id, UUID clienteId, String nome, String conteudo, Pr
         conteudo = conteudo.strip();
     }
 
-    /** O custo total é o custo da prioridade multiplicado pelo número de destinatários. */
     public static Campanha nova(UUID clienteId, String nome, String conteudo, Prioridade prioridade,
                                 int totalDestinatarios, Instant agora) {
         BigDecimal custoTotal = prioridade == null ? BigDecimal.ZERO

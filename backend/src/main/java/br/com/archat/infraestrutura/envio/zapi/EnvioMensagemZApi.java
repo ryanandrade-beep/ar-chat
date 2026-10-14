@@ -35,7 +35,6 @@ class EnvioMensagemZApi implements EnvioMensagemGateway {
         }
     }
 
-    /** Telefones cadastrados só com DDD (10 ou 11 dígitos) recebem o DDI do Brasil; IDs de grupo vão como estão. */
     static String comDdi(String telefone) {
         boolean grupo = telefone.contains("-");
         return !grupo && telefone.length() <= 11 ? DDI_BRASIL + telefone : telefone;

@@ -19,7 +19,6 @@ public class RegistroDeAtendimento {
         this.atendimentos = atendimentos;
     }
 
-    /** A empresa escreveu: continua o atendimento aberto ou abre um novo, em andamento. */
     public Atendimento aoResponder(Conversa conversa, Instant agora) {
         Atendimento atendimento = atendimentos.buscarAbertoDaConversa(conversa.id())
                 .map(aberto -> {
@@ -30,7 +29,6 @@ public class RegistroDeAtendimento {
         return salvar(conversa, atendimento);
     }
 
-    /** O cliente final escreveu: continua o atendimento aberto ou abre um novo, aguardando a empresa. */
     public Atendimento aoReceber(Conversa conversa, Instant agora) {
         Atendimento atendimento = atendimentos.buscarAbertoDaConversa(conversa.id())
                 .map(aberto -> {

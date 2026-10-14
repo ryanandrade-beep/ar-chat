@@ -25,7 +25,6 @@ class ConexaoWhatsAppZApi implements ConexaoWhatsApp {
                 Boolean.TRUE.equals(status.smartphoneConnected()), status.error());
     }
 
-    /** A Z-API devolve {@code value} com a imagem em base64 ou, em aparelhos com passkey, um {@code challenge}. */
     @Override
     public String qrCode() {
         Map<String, Object> resposta = zapi.qrCodeImagem();

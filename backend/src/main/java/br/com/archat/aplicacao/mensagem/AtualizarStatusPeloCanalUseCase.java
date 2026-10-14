@@ -30,7 +30,6 @@ public class AtualizarStatusPeloCanalUseCase {
         this.relogio = relogio;
     }
 
-    /** Retorna quantas mensagens mudaram de status. */
     public int aplicar(Collection<String> idsExternos, AvisoDoCanal aviso) {
         return unidadeDeTrabalho.executar(() -> (int) idsExternos.stream()
                 .map(mensagens::buscarPorIdExterno)

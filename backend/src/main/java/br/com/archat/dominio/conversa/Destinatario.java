@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 public record Destinatario(UUID id, UUID clienteId, TipoDestinatario tipo, String nome, String telefone,
                            boolean aceitaOfertas) {
 
-    /** Formato atual ({@code 120363019502650977-group}) e o antigo ({@code 5511999999999-1623275280}). */
     private static final Pattern ID_GRUPO = Pattern.compile("\\d{10,25}-group|\\d{10,15}-\\d{6,12}");
 
     public Destinatario {
@@ -52,7 +51,6 @@ public record Destinatario(UUID id, UUID clienteId, TipoDestinatario tipo, Strin
         return new Destinatario(UUID.randomUUID(), clienteId, tipo, nome, telefone, aceitaOfertas);
     }
 
-    /** Atalho para contatos (pessoas). */
     public static Destinatario novo(UUID clienteId, String nome, String telefone, boolean aceitaOfertas) {
         return novo(clienteId, TipoDestinatario.CONTATO, nome, telefone, aceitaOfertas);
     }

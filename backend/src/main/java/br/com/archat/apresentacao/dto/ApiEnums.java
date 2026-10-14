@@ -42,7 +42,6 @@ public final class ApiEnums {
     public static String atendimento(StatusAtendimento status) { return ATENDIMENTOS.get(status); }
     public static StatusAtendimento atendimento(String valor) { return ler(ATENDIMENTOS, valor, "status"); }
 
-    /** Só o WhatsApp Web está disponível; o WhatsApp Business (API oficial) ainda não. */
     public static void exigirCanalDisponivel(String canal) {
         if (canal == null || canal.isBlank() || canal.equalsIgnoreCase("whatsapp_web")) {
             return;

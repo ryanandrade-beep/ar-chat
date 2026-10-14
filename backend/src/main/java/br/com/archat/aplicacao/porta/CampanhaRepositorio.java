@@ -13,9 +13,7 @@ public interface CampanhaRepositorio {
 
     Optional<Campanha> buscarPorId(UUID id);
 
-    /** Campanhas do cliente, da mais recente para a mais antiga. */
     List<Campanha> listarPorCliente(UUID clienteId);
 
-    /** Campanhas criadas no período [de, ate), da mais recente para a mais antiga; {@code clienteId} nulo = todas. */
     List<Campanha> listarPorPeriodo(UUID clienteId, Instant de, Instant ate);
 }

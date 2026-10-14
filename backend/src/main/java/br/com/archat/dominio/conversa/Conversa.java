@@ -17,7 +17,6 @@ public class Conversa {
     private String ultimaMensagem;
     private Instant dataUltimaMensagem;
     private int naoLidas;
-    /** Status do atendimento atual; FINALIZADO quando não há atendimento aberto. */
     private StatusAtendimento statusAtendimento;
 
     private Conversa(UUID id, UUID clienteId, UUID destinatarioId, String ultimaMensagem,
@@ -48,7 +47,6 @@ public class Conversa {
         dataUltimaMensagem = mensagem.criadaEm();
     }
 
-    /** Mensagem do cliente final: entra como não lida. */
     public void registrarRecebida(Mensagem mensagem) {
         registrar(mensagem);
         naoLidas++;

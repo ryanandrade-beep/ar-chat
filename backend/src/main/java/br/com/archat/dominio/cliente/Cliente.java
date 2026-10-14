@@ -34,9 +34,6 @@ public class Cliente {
         this.criadoEm = Objects.requireNonNull(criadoEm);
     }
 
-    /**
-     * Cadastra um novo cliente. O valor inicial é o saldo, no pré-pago, ou o limite mensal, no pós-pago.
-     */
     public static Cliente novo(String nome, Documento documento, TipoPlano tipoPlano, BigDecimal valorInicial,
                                Instant agora) {
         BigDecimal valor = naoNegativo(valorInicial == null ? BigDecimal.ZERO : valorInicial, "Valor inicial");
@@ -45,7 +42,6 @@ public class Cliente {
                 prePago ? valor : BigDecimal.ZERO, prePago ? BigDecimal.ZERO : valor, BigDecimal.ZERO, true, agora);
     }
 
-    /** Recria um cliente já existente a partir dos dados persistidos. */
     public static Cliente reconstituir(UUID id, String nome, Documento documento, TipoPlano tipoPlano,
                                        BigDecimal saldo, BigDecimal limiteMensal, BigDecimal consumoMes,
                                        boolean ativo, Instant criadoEm) {
@@ -82,10 +78,6 @@ public class Cliente {
         limiteMensal = limite;
     }
 
-    /**
-     * Converte o cliente de plano. No pré → pós, o saldo restante vira crédito no consumo do mês.
-     * No pós → pré, não pode haver consumo pendente, e um eventual crédito vira saldo.
-     */
     public void converterPara(TipoPlano novoPlano, BigDecimal limiteMensalPosPago) {
         if (novoPlano == tipoPlano) {
             throw new RegraDeNegocioException("O cliente já está no plano " + novoPlano);

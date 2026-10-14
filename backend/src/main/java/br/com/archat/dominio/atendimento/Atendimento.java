@@ -41,13 +41,11 @@ public class Atendimento {
         this.mensagensRecebidas = mensagensRecebidas;
     }
 
-    /** O cliente final escreveu: o atendimento nasce aguardando a resposta da empresa. */
     public static Atendimento abertoPeloClienteFinal(UUID conversaId, UUID clienteId, Instant agora) {
         return new Atendimento(UUID.randomUUID(), conversaId, clienteId, OrigemAtendimento.CLIENTE_FINAL,
                 StatusAtendimento.AGUARDANDO, agora, null, null, 0, 1);
     }
 
-    /** A empresa iniciou a conversa: o atendimento nasce em andamento. */
     public static Atendimento abertoPelaEmpresa(UUID conversaId, UUID clienteId, Instant agora) {
         return new Atendimento(UUID.randomUUID(), conversaId, clienteId, OrigemAtendimento.EMPRESA,
                 StatusAtendimento.EM_ANDAMENTO, agora, null, null, 1, 0);
@@ -60,7 +58,6 @@ public class Atendimento {
                 mensagensEnviadas, mensagensRecebidas);
     }
 
-    /** A empresa enviou uma mensagem: o atendimento passa (ou volta) a estar em andamento. */
     public void registrarEnvio(Instant agora) {
         exigirAberto();
         mensagensEnviadas++;
@@ -72,7 +69,6 @@ public class Atendimento {
         }
     }
 
-    /** O cliente final escreveu: agora é a vez da empresa responder. */
     public void registrarRecebimento() {
         exigirAberto();
         mensagensRecebidas++;
@@ -95,7 +91,6 @@ public class Atendimento {
         finalizadoEm = agora;
     }
 
-    /** Tempo entre a primeira mensagem do cliente final e a primeira resposta da empresa. */
     public Optional<Duration> tempoAtePrimeiraResposta() {
         return Optional.ofNullable(primeiraRespostaEm).map(resposta -> Duration.between(abertoEm, resposta));
     }

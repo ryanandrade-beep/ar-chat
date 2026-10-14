@@ -15,7 +15,6 @@ public final class ClienteDtos {
     private ClienteDtos() {
     }
 
-    /** {@code initialAmount} é o saldo inicial (prepaid) ou o limite mensal (postpaid). */
     public record CreateClientRequest(@NotBlank @Size(max = 120) String name, @NotBlank String documentId,
                                       @NotBlank String documentType, @NotBlank String planType,
                                       @DecimalMin("0.00") BigDecimal initialAmount) {
@@ -30,7 +29,6 @@ public final class ClienteDtos {
     public record LimitRequest(@NotNull @DecimalMin("0.00") BigDecimal limit) {
     }
 
-    /** {@code limit} é obrigatório ao converter para postpaid. */
     public record ChangePlanRequest(@NotBlank String planType, BigDecimal limit) {
     }
 

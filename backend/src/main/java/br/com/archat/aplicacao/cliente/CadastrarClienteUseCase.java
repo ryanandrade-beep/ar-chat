@@ -51,7 +51,6 @@ public class CadastrarClienteUseCase {
         }
     }
 
-    /** {@code valorInicial} é o saldo (pré-pago) ou o limite mensal (pós-pago). */
     public record Comando(String nome, String documento, TipoDocumento tipoDocumento, TipoPlano tipoPlano,
                           BigDecimal valorInicial) {
     }

@@ -12,7 +12,6 @@ public record UsuarioAutenticado(Sessao sessao) {
         return sessao.perfil() == Sessao.Perfil.ADMINISTRADOR;
     }
 
-    /** Administradores podem consultar qualquer cliente; um cliente, apenas a si mesmo. */
     public void exigirAcessoAoCliente(UUID clienteId) {
         if (!administrador() && !sessao.id().equals(clienteId)) {
             throw new AcessoNegadoException("Acesso permitido apenas aos próprios dados");

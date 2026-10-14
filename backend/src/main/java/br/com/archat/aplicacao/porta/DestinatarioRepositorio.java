@@ -15,15 +15,12 @@ public interface DestinatarioRepositorio {
 
     List<Destinatario> buscarPorIds(Collection<UUID> ids);
 
-    /** Contatos do cliente em ordem alfabética. */
     List<Destinatario> listarPorCliente(UUID clienteId);
 
     Optional<Destinatario> buscarPorClienteETelefone(UUID clienteId, String telefone);
 
-    /** Contatos do cliente que consentiram em receber ofertas (LGPD), em ordem alfabética. */
     List<Destinatario> listarQueAceitamOfertas(UUID clienteId);
 
-    /** Destinatários de qualquer cliente com um destes telefones/IDs de grupo (para mensagens recebidas). */
     List<Destinatario> buscarPorTelefones(Collection<String> telefones);
 
     void excluir(UUID id);

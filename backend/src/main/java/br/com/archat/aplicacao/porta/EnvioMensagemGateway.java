@@ -15,7 +15,6 @@ public interface EnvioMensagemGateway {
     record Envio(UUID mensagemId, String telefone, String conteudo, Prioridade prioridade, int tentativa) {
     }
 
-    /** {@code idExterno}: identificador da mensagem no canal, usado depois pelos avisos de entrega e leitura. */
     record ResultadoEnvio(boolean aceito, String idExterno) {
 
         public static ResultadoEnvio aceito(String idExterno) {

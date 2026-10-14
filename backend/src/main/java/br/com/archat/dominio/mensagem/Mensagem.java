@@ -20,7 +20,6 @@ public class Mensagem {
     private StatusMensagem status;
     private final BigDecimal custo;
     private int tentativas;
-    /** Identificador da mensagem no canal (ex.: messageId da Z-API), usado pelos webhooks de status. */
     private String idExterno;
     private final Instant criadaEm;
     private Instant atualizadaEm;
@@ -42,12 +41,10 @@ public class Mensagem {
         this.atualizadaEm = atualizadaEm;
     }
 
-    /** Cria a mensagem que o cliente quer enviar; ela nasce enfileirada, já com o custo da sua prioridade. */
     public static Mensagem novaDoCliente(UUID conversaId, String conteudo, Prioridade prioridade, Instant agora) {
         return novaDoCliente(conversaId, null, conteudo, prioridade, agora);
     }
 
-    /** Mensagem que faz parte de uma campanha ({@code campanhaId} nulo para envios avulsos). */
     public static Mensagem novaDoCliente(UUID conversaId, UUID campanhaId, String conteudo, Prioridade prioridade,
                                          Instant agora) {
         if (conteudo == null || conteudo.isBlank()) {
@@ -63,7 +60,6 @@ public class Mensagem {
                 StatusMensagem.ENFILEIRADA, prioridade.custo(), 0, null, agora, agora);
     }
 
-    /** Mensagem escrita pelo cliente final: chega já entregue, sem custo e sem passar pela fila. */
     public static Mensagem recebidaDoDestinatario(UUID conversaId, String conteudo, String idExterno, Instant quando) {
         String texto = conteudo == null || conteudo.isBlank() ? "[mensagem sem texto]" : conteudo.strip();
         if (texto.length() > TAMANHO_MAXIMO) {
@@ -99,12 +95,10 @@ public class Mensagem {
         mudarPara(StatusMensagem.LIDA, agora);
     }
 
-    /** Registra uma falha de envio: volta para a fila enquanto houver tentativas, senão falha de vez. */
     public void registrarFalhaDeEnvio(int maximoTentativas, Instant agora) {
         mudarPara(tentativas < maximoTentativas ? StatusMensagem.ENFILEIRADA : StatusMensagem.FALHA, agora);
     }
 
-    /** Devolve à fila uma mensagem cujo processamento foi interrompido (ex.: reinício do sistema). */
     public void devolverParaFila(Instant agora) {
         if (status == StatusMensagem.PROCESSANDO) {
             mudarPara(StatusMensagem.ENFILEIRADA, agora);

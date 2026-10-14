@@ -121,15 +121,10 @@ public class DispararCampanhaUseCase {
         return mensagem;
     }
 
-    /**
-     * Informe {@code destinatarioIds} ou {@code todosQueAceitamOfertas = true} para enviar a todos
-     * os contatos que consentiram.
-     */
     public record Comando(UUID clienteId, String nome, String conteudo, Prioridade prioridade,
                           List<UUID> destinatarioIds, boolean todosQueAceitamOfertas) {
     }
 
-    /** {@code disponivel} é o saldo (pré-pago) ou o limite restante (pós-pago) após a cobrança. */
     public record CampanhaDisparada(Campanha campanha, List<Mensagem> mensagens, BigDecimal disponivel) {
     }
 }

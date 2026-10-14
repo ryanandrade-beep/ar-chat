@@ -13,10 +13,6 @@ public final class DestinatarioDtos {
     private DestinatarioDtos() {
     }
 
-    /**
-     * {@code type}: "contact" (padrão) ou "group". Para grupos, {@code phone} é o ID do grupo
-     * (ex.: 120363019502650977-group). {@code acceptsMarketing}: consentimento (LGPD) para campanhas.
-     */
     public record RecipientRequest(String type, @NotBlank @Size(max = 120) String name,
                                    @NotBlank @Size(max = 40) String phone, Boolean acceptsMarketing) {
 

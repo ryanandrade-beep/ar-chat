@@ -80,7 +80,6 @@ public class EnviarMensagemUseCase {
         return enviada;
     }
 
-    /** Usa a conversa informada ou, a partir do destinatário, a conversa dele (criando-a no primeiro envio). */
     private Conversa conversaDoEnvio(Comando comando) {
         if (comando.conversaId() != null) {
             return conversas.buscarPorId(comando.conversaId())
@@ -101,12 +100,10 @@ public class EnviarMensagemUseCase {
         return agora.plus(tempoEstimadoPorMensagem.multipliedBy(fila.tamanho() + 1L));
     }
 
-    /** Informe {@code conversaId} ou {@code destinatarioId}. */
     public record Comando(UUID clienteId, UUID conversaId, UUID destinatarioId, String conteudo,
                           Prioridade prioridade) {
     }
 
-    /** {@code disponivel} é o saldo (pré-pago) ou o limite restante (pós-pago) após a cobrança. */
     public record MensagemEnviada(Mensagem mensagem, BigDecimal disponivel, Instant previsaoEntrega) {
     }
 }

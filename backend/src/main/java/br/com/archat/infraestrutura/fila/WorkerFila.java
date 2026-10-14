@@ -34,7 +34,6 @@ class WorkerFila implements SmartLifecycle {
     private final ConfirmarRecebimentoUseCase confirmarRecebimento;
     private final RecuperarFilaUseCase recuperarFila;
     private final ArChatPropriedades.Fila configuracao;
-    /** Só o canal simulado confirma a entrega sozinho; com a Z-API a entrega real chega pelo WhatsApp. */
     private final boolean simularEntrega;
 
     private volatile boolean executando;

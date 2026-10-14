@@ -158,7 +158,6 @@ class FluxoCompletoIT {
         executar(post("/recipients"), padaria, """
                 {"name": "Joana", "phone": "5544977776666"}""").andExpect(status().isCreated());
 
-        // webhook "Ao receber" — corpo no formato do exemplo da documentação da Z-API
         mvc.perform(post("/webhooks/zapi/segredo-de-teste/received").contentType(MediaType.APPLICATION_JSON).content("""
                 {"isStatusReply": false, "senderLid": "81896604192873@lid", "connectedPhone": "554499999999",
                  "waitingMessage": false, "isEdit": false, "isGroup": false, "isNewsletter": false,
@@ -184,7 +183,6 @@ class FluxoCompletoIT {
         executar(post("/conversations/" + conversaId + "/resume"), padaria, null).andExpect(jsonPath("$.status").value("in_progress"));
         executar(post("/conversations/" + conversaId + "/read"), padaria, null).andExpect(jsonPath("$.unreadCount").value(0));
 
-        // webhook "Status da mensagem": aguarda o envio simulado e confirma a leitura pelo id externo
         String idExterno = null;
         for (int i = 0; i < 50 && idExterno == null; i++) {
             Thread.sleep(100);

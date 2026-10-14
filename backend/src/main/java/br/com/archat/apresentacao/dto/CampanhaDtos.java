@@ -19,7 +19,6 @@ public final class CampanhaDtos {
     private CampanhaDtos() {
     }
 
-    /** Informe {@code recipientIds} ou {@code allOptedIn = true} (todos os contatos que aceitam ofertas). */
     public record CreateCampaignRequest(@NotBlank @Size(max = 120) String name,
                                         @NotBlank @Size(max = Mensagem.TAMANHO_MAXIMO) String content,
                                         @NotBlank String priority, List<UUID> recipientIds, Boolean allOptedIn,

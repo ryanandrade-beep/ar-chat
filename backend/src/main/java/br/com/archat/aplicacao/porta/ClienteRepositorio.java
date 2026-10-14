@@ -13,7 +13,6 @@ public interface ClienteRepositorio {
 
     Optional<Cliente> buscarPorId(UUID id);
 
-    /** Busca o cliente bloqueando o registro até o fim da transação, para cobranças concorrentes. */
     Optional<Cliente> buscarPorIdParaAtualizacao(UUID id);
 
     Optional<Cliente> buscarPorDocumento(Documento documento);
@@ -22,6 +21,5 @@ public interface ClienteRepositorio {
 
     List<Cliente> listarTodos();
 
-    /** Zera o consumo do mês dos clientes pós-pagos e retorna quantos foram afetados. */
     int zerarConsumoMensalDosPosPagos();
 }

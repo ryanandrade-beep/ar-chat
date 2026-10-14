@@ -23,8 +23,6 @@ public final class RelatorioDtos {
     private RelatorioDtos() {
     }
 
-    // ---------- Atendimentos finalizados ----------
-
     public record AttendanceLine(UUID id, UUID conversationId, String recipient, String startedBy, Instant openedAt,
                                  Instant firstResponseAt, Instant finishedAt, Long firstResponseSeconds,
                                  Long durationSeconds, int messagesSent, int messagesReceived) {
@@ -38,7 +36,6 @@ public final class RelatorioDtos {
         }
     }
 
-    /** Tempos em segundos; {@code averageFirstResponseSeconds} só considera atendimentos iniciados pelo cliente final. */
     public record AttendancesReport(LocalDate from, LocalDate to, long total, long startedByCustomer,
                                     Long averageFirstResponseSeconds, Long averageDurationSeconds,
                                     double averageMessages, Map<LocalDate, Long> perDay, List<AttendanceLine> attendances) {
@@ -51,8 +48,6 @@ public final class RelatorioDtos {
                     r.atendimentos().stream().map(AttendanceLine::de).toList());
         }
     }
-
-    // ---------- Faturamento por cliente ----------
 
     public record RevenueLine(UUID clientId, String name, String planType, long messages, long urgentMessages,
                               BigDecimal urgentPercentage, BigDecimal grossRevenue, BigDecimal refunds,
@@ -73,8 +68,6 @@ public final class RelatorioDtos {
                     f.clientes().stream().map(RevenueLine::de).toList());
         }
     }
-
-    // ---------- Desempenho das campanhas ----------
 
     public record CampaignLine(UUID id, String name, String priority, Instant createdAt, int recipients,
                                BigDecimal totalCost, long sent, long delivered, long read, long failed, long pending,
@@ -98,8 +91,6 @@ public final class RelatorioDtos {
                     r.taxaLeituraGeral(), r.campanhas().stream().map(CampaignLine::de).toList());
         }
     }
-
-    // ---------- Monitoramento da fila (não é relatório) ----------
 
     public record QueueStatus(Instant generatedAt, int pendingUrgent, int pendingNormal, long sent,
                               long temporaryFailures, long definitiveFailures, long averageWaitMs,

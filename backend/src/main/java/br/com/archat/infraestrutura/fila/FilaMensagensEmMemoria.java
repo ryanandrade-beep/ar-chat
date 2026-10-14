@@ -35,7 +35,6 @@ public class FilaMensagensEmMemoria implements FilaMensagens {
         }
     }
 
-    /** Retira a próxima mensagem, esperando até {@code tempoMaximo} se a fila estiver vazia. */
     public Optional<UUID> aguardarProxima(Duration tempoMaximo) throws InterruptedException {
         trava.lock();
         try {

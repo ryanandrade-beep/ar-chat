@@ -82,7 +82,6 @@ class MensagemRepositorioJpa implements MensagemRepositorio {
         return contagem(jpa.contarPorStatusDaCampanha(campanhaId));
     }
 
-    /** Todos os status aparecem, com zero quando não há mensagens. */
     private static Map<StatusMensagem, Long> contagem(List<Object[]> linhas) {
         Map<StatusMensagem, Long> contagem = new EnumMap<>(StatusMensagem.class);
         for (StatusMensagem status : StatusMensagem.values()) {

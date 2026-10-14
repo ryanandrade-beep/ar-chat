@@ -28,7 +28,6 @@ public class RelatorioCampanhasUseCase {
         this.mensagens = mensagens;
     }
 
-    /** Com {@code clienteId} nulo, considera as campanhas de todos os clientes. */
     public RelatorioCampanhas emitir(UUID clienteId, Periodo periodo) {
         List<Campanha> doPeriodo = campanhas.listarPorPeriodo(clienteId, periodo.de(), periodo.ate());
         Map<UUID, Map<StatusMensagem, Long>> contagens =
@@ -69,11 +68,6 @@ public class RelatorioCampanhasUseCase {
                 : BigDecimal.valueOf(parte).multiply(CEM).divide(BigDecimal.valueOf(todo), 2, RoundingMode.HALF_EVEN);
     }
 
-    /**
-     * {@code enviadas} = aceitas pelo canal (enviada, entregue ou lida); {@code entregues} inclui as lidas;
-     * {@code taxaEntrega} = entregues ÷ mensagens já finalizadas; {@code taxaLeitura} = lidas ÷ entregues;
-     * {@code custoPorEntregue} é nulo enquanto nenhuma foi entregue.
-     */
     public record DesempenhoCampanha(Campanha campanha, long enviadas, long entregues, long lidas, long falhas,
                                      long pendentes, BigDecimal valorEstornado, BigDecimal custoLiquido,
                                      BigDecimal taxaEntrega, BigDecimal taxaLeitura, BigDecimal custoPorEntregue) {

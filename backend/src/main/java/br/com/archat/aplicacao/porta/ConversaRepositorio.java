@@ -14,6 +14,5 @@ public interface ConversaRepositorio {
 
     Optional<Conversa> buscarPorDestinatario(UUID destinatarioId);
 
-    /** Conversas do cliente, da mais recente para a mais antiga. */
     List<Conversa> listarPorCliente(UUID clienteId);
 }
