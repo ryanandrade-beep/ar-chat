@@ -34,7 +34,7 @@ class EnvioMensagemZApi implements EnvioMensagemGateway {
         try {
             ClienteZApi.RespostaEnvio resposta = enviarPelaRota(comDdi(envio.telefone()), envio);
             boolean aceito = resposta != null && resposta.messageId() != null;
-            log.info("Z-API {} da mensagem {} (tentativa {}): {}", rota(envio.midia()), envio.mensagemId(), envio.tentativa(),
+            log.info("Z-API {} da mensagem {} (tentativa {}): {}", envio.contato() != null ? "send-contact" : rota(envio.midia()), envio.mensagemId(), envio.tentativa(),
                     aceito ? "aceito, messageId=" + resposta.messageId() : "sem messageId");
             return aceito ? ResultadoEnvio.aceito(resposta.messageId()) : ResultadoEnvio.recusado();
         } catch (RestClientException | CanalIndisponivelException e) {
@@ -45,6 +45,9 @@ class EnvioMensagemZApi implements EnvioMensagemGateway {
 
     private ClienteZApi.RespostaEnvio enviarPelaRota(String telefone, Envio envio) {
         ClienteZApi.Credenciais c = instancias.da(envio.clienteId());
+        if (envio.contato() != null) {
+            return zapi.enviarContato(c, telefone, envio.contato().nome(), envio.contato().telefone());
+        }
         Midia midia = envio.midia();
         String legenda = envio.conteudo() == null || envio.conteudo().isBlank() ? null : envio.conteudo();
         if (midia == null) {

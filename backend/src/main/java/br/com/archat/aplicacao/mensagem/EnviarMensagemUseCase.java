@@ -15,6 +15,7 @@ import br.com.archat.dominio.conversa.Destinatario;
 import br.com.archat.dominio.excecao.RecursoNaoEncontradoException;
 import br.com.archat.dominio.excecao.RegraDeNegocioException;
 import br.com.archat.dominio.financeiro.Transacao;
+import br.com.archat.dominio.mensagem.ContatoCompartilhado;
 import br.com.archat.dominio.mensagem.Mensagem;
 import br.com.archat.dominio.mensagem.Midia;
 import br.com.archat.dominio.mensagem.Prioridade;
@@ -79,8 +80,10 @@ public class EnviarMensagemUseCase {
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente"));
             BigDecimal preco = comando.prioridade() == null ? null
                     : planos == null ? comando.prioridade().custo() : planos.custo(cliente.id(), comando.prioridade());
-            Mensagem mensagem = Mensagem.novaDoCliente(conversa.id(), null, comando.conteudo(), comando.midia(),
-                    comando.prioridade(), preco, agora);
+            Mensagem mensagem = comando.contato() != null
+                    ? Mensagem.compartilhandoContato(conversa.id(), comando.contato(), comando.prioridade(), preco, agora)
+                    : Mensagem.novaDoCliente(conversa.id(), null, comando.conteudo(), comando.midia(),
+                            comando.prioridade(), preco, agora);
 
             cliente.cobrar(mensagem.custo());
             conversa.registrar(mensagem);
@@ -119,15 +122,20 @@ public class EnviarMensagemUseCase {
     }
 
     public record Comando(UUID clienteId, UUID conversaId, UUID destinatarioId, String conteudo, Midia midia,
-                          Prioridade prioridade, UUID operadorId) {
+                          Prioridade prioridade, UUID operadorId, ContatoCompartilhado contato) {
+
+        public Comando(UUID clienteId, UUID conversaId, UUID destinatarioId, String conteudo, Midia midia,
+                       Prioridade prioridade, UUID operadorId) {
+            this(clienteId, conversaId, destinatarioId, conteudo, midia, prioridade, operadorId, null);
+        }
 
         public Comando(UUID clienteId, UUID conversaId, UUID destinatarioId, String conteudo, Midia midia,
                        Prioridade prioridade) {
-            this(clienteId, conversaId, destinatarioId, conteudo, midia, prioridade, null);
+            this(clienteId, conversaId, destinatarioId, conteudo, midia, prioridade, null, null);
         }
 
         public Comando(UUID clienteId, UUID conversaId, UUID destinatarioId, String conteudo, Prioridade prioridade) {
-            this(clienteId, conversaId, destinatarioId, conteudo, null, prioridade, null);
+            this(clienteId, conversaId, destinatarioId, conteudo, null, prioridade, null, null);
         }
     }
 

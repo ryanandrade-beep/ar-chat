@@ -5,6 +5,7 @@ import br.com.archat.aplicacao.excecao.NaoAutenticadoException;
 import br.com.archat.aplicacao.mensagem.AtualizarStatusPeloCanalUseCase;
 import br.com.archat.aplicacao.mensagem.AtualizarStatusPeloCanalUseCase.AvisoDoCanal;
 import br.com.archat.dominio.excecao.RegraDeNegocioException;
+import br.com.archat.dominio.mensagem.ContatoCompartilhado;
 import br.com.archat.dominio.mensagem.Midia;
 import br.com.archat.dominio.mensagem.TipoMidia;
 import br.com.archat.aplicacao.porta.InstanciaWhatsAppRepositorio;
@@ -63,8 +64,10 @@ class WebhookZApiController {
         }
         Instant quando = corpo.momment() == null ? null : Instant.ofEpochMilli(corpo.momment());
         UUID empresa = instancias.buscarPorInstancia(corpo.instanceId()).map(i -> i.clienteId()).orElse(null);
-        boolean registrada = receber.doCanal(empresa, corpo.phone(), corpo.textoOuLegenda(), corpo.midia(),
-                corpo.messageId(), quando).isPresent();
+        boolean registrada = (corpo.contato() != null
+                ? receber.contatoDoCanal(empresa, corpo.phone(), corpo.contato(), corpo.messageId(), quando)
+                : receber.doCanal(empresa, corpo.phone(), corpo.textoOuLegenda(), corpo.midia(), corpo.messageId(), quando))
+                .isPresent();
         if (!registrada) {
             log.info("Webhook Z-API: mensagem {} de {} ignorada (repetida ou contato não cadastrado)",
                     corpo.messageId(), corpo.phone());
@@ -95,7 +98,19 @@ class WebhookZApiController {
 
     record RecebidaZApi(String instanceId, String type, String messageId, String phone, Boolean fromMe, Boolean isGroup,
                         Long momment, String senderName, Texto text, Imagem image, Audio audio, Video video,
-                        Documento document) {
+                        Documento document, Contato contact) {
+
+        ContatoCompartilhado contato() {
+            if (contact == null || contact.phones() == null || contact.phones().isEmpty()) return null;
+            try {
+                return new ContatoCompartilhado(contact.displayName(), contact.phones().get(0));
+            } catch (RegraDeNegocioException e) {
+                return null;
+            }
+        }
+
+        record Contato(String displayName, String vCard, List<String> phones) {
+        }
 
         String textoOuLegenda() {
             if (text != null) return text.message();

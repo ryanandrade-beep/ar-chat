@@ -1,5 +1,6 @@
 package br.com.archat.infraestrutura.persistencia.entidade;
 
+import br.com.archat.dominio.mensagem.ContatoCompartilhado;
 import br.com.archat.dominio.mensagem.Midia;
 import br.com.archat.dominio.mensagem.Prioridade;
 import br.com.archat.dominio.mensagem.TipoMidia;
@@ -52,6 +53,11 @@ public class MensagemEntity {
 
     private boolean automatica;
 
+    @Column(name = "contato_nome")
+    private String contatoNome;
+    @Column(name = "contato_telefone")
+    private String contatoTelefone;
+
     protected MensagemEntity() {
     }
 
@@ -96,6 +102,15 @@ public class MensagemEntity {
     }
 
     public boolean isAutomatica() { return automatica; }
+
+    public void definirContato(ContatoCompartilhado contato) {
+        this.contatoNome = contato == null ? null : contato.nome();
+        this.contatoTelefone = contato == null ? null : contato.telefone();
+    }
+
+    public ContatoCompartilhado getContato() {
+        return contatoNome == null ? null : new ContatoCompartilhado(contatoNome, contatoTelefone);
+    }
 
     public Midia getMidia() {
         return tipoMidia == null ? null : new Midia(tipoMidia, urlMidia, nomeArquivo);

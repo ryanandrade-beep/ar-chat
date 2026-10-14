@@ -77,6 +77,10 @@ class ClienteZApi {
                 .retrieve().body(RespostaEnvio.class);
     }
 
+    RespostaEnvio enviarContato(Credenciais c, String telefone, String nome, String telefoneDoContato) {
+        return post(c, "/send-contact", new EnvioContato(telefone, nome, telefoneDoContato));
+    }
+
     RespostaStatus status(Credenciais c) {
         return http.get().uri(c.prefixo() + "/status").retrieve().body(RespostaStatus.class);
     }
@@ -129,6 +133,9 @@ class ClienteZApi {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record EnvioVideo(String phone, String video, String caption) {
+    }
+
+    record EnvioContato(String phone, String contactName, String contactPhone) {
     }
 
     record LeituraMensagem(String phone, String messageId) {

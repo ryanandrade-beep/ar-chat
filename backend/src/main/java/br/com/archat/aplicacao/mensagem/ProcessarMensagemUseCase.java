@@ -87,7 +87,7 @@ public class ProcessarMensagemUseCase {
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Conversa"));
             return envio.enviar(new EnvioMensagemGateway.Envio(mensagem.id(), conversa.clienteId(),
                     telefoneDoDestinatario(conversa), mensagem.conteudo(), mensagem.midia(), mensagem.prioridade(),
-                    mensagem.tentativas()));
+                    mensagem.tentativas(), mensagem.contato()));
         } catch (RuntimeException erro) {
             return EnvioMensagemGateway.ResultadoEnvio.recusado();
         }

@@ -5,6 +5,7 @@ import br.com.archat.aplicacao.mensagem.ConsultarMensagensUseCase;
 import br.com.archat.aplicacao.mensagem.EnviarMensagemUseCase;
 import br.com.archat.aplicacao.porta.FiltroMensagens;
 import br.com.archat.apresentacao.dto.ApiEnums;
+import br.com.archat.apresentacao.dto.MensagemDtos;
 import br.com.archat.apresentacao.dto.MensagemDtos.MediaRequest;
 import br.com.archat.apresentacao.dto.MensagemDtos.MessageResponse;
 import br.com.archat.apresentacao.dto.MensagemDtos.MessageStatusResponse;
@@ -50,7 +51,8 @@ class MensagemController {
         ApiEnums.exigirCanalDisponivel(r.channel());
         return SendMessageResponse.de(enviar.executar(new EnviarMensagemUseCase.Comando(cliente.id(),
                 r.conversationId(), r.recipientId(), r.content(), MediaRequest.paraDominio(r.media()),
-                ApiEnums.prioridade(r.priority()), cliente.atendenteId())));
+                ApiEnums.prioridade(r.priority()), cliente.atendenteId(),
+                MensagemDtos.ContactRequest.paraDominio(r.contact()))));
     }
 
     @GetMapping

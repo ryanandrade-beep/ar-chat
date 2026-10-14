@@ -10,6 +10,7 @@ import br.com.archat.dominio.atendimento.Atendimento;
 import br.com.archat.dominio.conversa.Conversa;
 import br.com.archat.dominio.conversa.Destinatario;
 import br.com.archat.dominio.excecao.RecursoNaoEncontradoException;
+import br.com.archat.dominio.mensagem.ContatoCompartilhado;
 import br.com.archat.dominio.mensagem.Mensagem;
 import br.com.archat.dominio.mensagem.Midia;
 
@@ -87,6 +88,19 @@ public class ReceberMensagemUseCase {
         return registro.map(Registro::mensagem);
     }
 
+    public Optional<Mensagem> contatoDoCanal(UUID clienteId, String telefoneOuGrupo, ContatoCompartilhado contato,
+                                             String idExterno, Instant quando) {
+        if (idExterno != null && mensagens.buscarPorIdExterno(idExterno).isPresent()) {
+            return Optional.empty();
+        }
+        Instant momento = quando == null ? relogio.instant() : quando;
+        Optional<Registro> registro = unidadeDeTrabalho.executar(() -> conversaDoRemetente(clienteId, telefoneOuGrupo)
+                .map(conversa -> registrarMensagem(conversa, Mensagem.contatoRecebido(conversa.id(), contato, idExterno, momento),
+                        momento)));
+        registro.ifPresent(r -> enviarRespostasDaUra(r.clienteId(), r.telefone(), r.respostasDaUra()));
+        return registro.map(Registro::mensagem);
+    }
+
     private Optional<Conversa> conversaDoRemetente(UUID clienteId, String telefoneOuGrupo) {
         List<Destinatario> candidatos = destinatarios.buscarPorTelefones(variacoes(telefoneOuGrupo)).stream()
                 .filter(d -> clienteId == null || d.clienteId().equals(clienteId))
@@ -107,7 +121,11 @@ public class ReceberMensagemUseCase {
     }
 
     private Registro registrar(Conversa conversa, String conteudo, Midia midia, String idExterno, Instant quando) {
-        Mensagem mensagem = Mensagem.recebidaDoDestinatario(conversa.id(), conteudo, midia, idExterno, quando);
+        return registrarMensagem(conversa, Mensagem.recebidaDoDestinatario(conversa.id(), conteudo, midia, idExterno, quando),
+                quando);
+    }
+
+    private Registro registrarMensagem(Conversa conversa, Mensagem mensagem, Instant quando) {
         conversa.registrarRecebida(mensagem);
         conversas.salvar(conversa);
         mensagens.salvar(mensagem);

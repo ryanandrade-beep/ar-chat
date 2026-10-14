@@ -336,6 +336,20 @@ class FluxoCompletoIT {
                 .andExpect(content().contentType("application/pdf"))
                 .andExpect(content().bytes("%PDF-1.4 teste".getBytes()));
 
+        String contatoId = corpo(executar(post("/messages"), horti, """
+                {"conversationId": "%s", "priority": "normal", "contact": {"name": "Fornecedor de Banana", "phone": "(44) 98877-6655"}}"""
+                .formatted(conversaId)).andExpect(status().isCreated()), "$.id");
+        executar(get("/messages/" + contatoId), horti, null)
+                .andExpect(jsonPath("$.contact.name").value("Fornecedor de Banana"))
+                .andExpect(jsonPath("$.contact.phone").value("44988776655"));
+        mvc.perform(post("/webhooks/zapi/segredo-de-teste/received").contentType(MediaType.APPLICATION_JSON).content("""
+                {"messageId": "MSG-CONTATO-1", "phone": "5544966665555", "fromMe": false, "momment": 1632228900000,
+                 "type": "ReceivedCallback", "isGroup": false,
+                 "contact": {"displayName": "Cesar Baleco", "vCard": "BEGIN:VCARD", "phones": ["5544999999999"]}}"""))
+                .andExpect(jsonPath("$.registered").value(true));
+        executar(get("/conversations/" + conversaId), horti, null)
+                .andExpect(jsonPath("$.lastMessageContent").value("[Contato] Cesar Baleco"));
+
         executar(post("/campaigns"), horti, """
                 {"name": "Encarte da semana", "priority": "normal", "allOptedIn": true,
                  "media": {"type": "image", "url": "https://hortifruti.com/encarte.jpg"}}""")
