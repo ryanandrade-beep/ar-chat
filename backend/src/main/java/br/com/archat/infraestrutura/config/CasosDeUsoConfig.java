@@ -29,7 +29,10 @@ import br.com.archat.aplicacao.mensagem.RecuperarFilaUseCase;
 import br.com.archat.aplicacao.monitoramento.MonitorarFilaUseCase;
 import br.com.archat.aplicacao.operador.ConsultarEquipeUseCase;
 import br.com.archat.aplicacao.operador.GerenciarOperadoresUseCase;
+import br.com.archat.aplicacao.plano.GerenciarPlanosUseCase;
+import br.com.archat.aplicacao.plano.PlanoDoCliente;
 import br.com.archat.aplicacao.porta.AdministradorRepositorio;
+import br.com.archat.aplicacao.porta.AssinaturaRepositorio;
 import br.com.archat.aplicacao.porta.AtendimentoRepositorio;
 import br.com.archat.aplicacao.porta.CampanhaRepositorio;
 import br.com.archat.aplicacao.porta.ClienteRepositorio;
@@ -43,6 +46,7 @@ import br.com.archat.aplicacao.porta.EnvioMensagemGateway;
 import br.com.archat.aplicacao.porta.MensagemRepositorio;
 import br.com.archat.aplicacao.porta.MetricasFila;
 import br.com.archat.aplicacao.porta.OperadorRepositorio;
+import br.com.archat.aplicacao.porta.PlanoRepositorio;
 import br.com.archat.aplicacao.porta.ServicoToken;
 import br.com.archat.aplicacao.porta.TransacaoRepositorio;
 import br.com.archat.aplicacao.porta.UnidadeDeTrabalho;
@@ -92,8 +96,21 @@ class CasosDeUsoConfig {
     @Bean
     GerenciarOperadoresUseCase gerenciarOperadores(OperadorRepositorio operadores, ContaDeAcessoRepositorio contas,
                                                    CodificadorSenha codificador, UnidadeDeTrabalho unidadeDeTrabalho,
-                                                   Clock relogio) {
-        return new GerenciarOperadoresUseCase(operadores, contas, codificador, unidadeDeTrabalho, relogio);
+                                                   Clock relogio, PlanoDoCliente planos) {
+        return new GerenciarOperadoresUseCase(operadores, contas, codificador, unidadeDeTrabalho, relogio, planos);
+    }
+
+    @Bean
+    PlanoDoCliente planoDoCliente(AssinaturaRepositorio assinaturas, PlanoRepositorio planos) {
+        return new PlanoDoCliente(assinaturas, planos);
+    }
+
+    @Bean
+    GerenciarPlanosUseCase gerenciarPlanos(PlanoRepositorio planos, AssinaturaRepositorio assinaturas,
+                                           ClienteRepositorio clientes, TransacaoRepositorio transacoes,
+                                           OperadorRepositorio operadores, UnidadeDeTrabalho unidadeDeTrabalho,
+                                           Clock relogio) {
+        return new GerenciarPlanosUseCase(planos, assinaturas, clientes, transacoes, operadores, unidadeDeTrabalho, relogio);
     }
 
     @Bean
@@ -183,9 +200,10 @@ class CasosDeUsoConfig {
                                          ConversaRepositorio conversas, MensagemRepositorio mensagens,
                                          TransacaoRepositorio transacoes, FilaMensagensEmMemoria fila,
                                          UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio,
-                                         ArChatPropriedades propriedades, RegistroDeAtendimento atendimentos) {
+                                         ArChatPropriedades propriedades, RegistroDeAtendimento atendimentos,
+                                         PlanoDoCliente planos) {
         return new EnviarMensagemUseCase(clientes, destinatarios, conversas, mensagens, transacoes, fila,
-                unidadeDeTrabalho, relogio, propriedades.fila().tempoEstimadoPorMensagem(), atendimentos);
+                unidadeDeTrabalho, relogio, propriedades.fila().tempoEstimadoPorMensagem(), atendimentos, planos);
     }
 
     @Bean
@@ -285,9 +303,9 @@ class CasosDeUsoConfig {
                                              ConversaRepositorio conversas, MensagemRepositorio mensagens,
                                              TransacaoRepositorio transacoes, CampanhaRepositorio campanhas,
                                              FilaMensagensEmMemoria fila, UnidadeDeTrabalho unidadeDeTrabalho,
-                                             Clock relogio) {
+                                             Clock relogio, PlanoDoCliente planos) {
         return new DispararCampanhaUseCase(clientes, destinatarios, conversas, mensagens, transacoes, campanhas, fila,
-                unidadeDeTrabalho, relogio);
+                unidadeDeTrabalho, relogio, planos);
     }
 
     @Bean

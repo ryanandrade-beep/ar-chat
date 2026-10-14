@@ -54,13 +54,22 @@ public class Mensagem {
 
     public static Mensagem novaDoCliente(UUID conversaId, UUID campanhaId, String conteudo, Midia midia,
                                          Prioridade prioridade, Instant agora) {
+        return novaDoCliente(conversaId, campanhaId, conteudo, midia, prioridade,
+                prioridade == null ? null : prioridade.custo(), agora);
+    }
+
+    public static Mensagem novaDoCliente(UUID conversaId, UUID campanhaId, String conteudo, Midia midia,
+                                         Prioridade prioridade, BigDecimal custo, Instant agora) {
         validarConteudo(conteudo, midia);
         if (prioridade == null) {
             throw new RegraDeNegocioException("A prioridade é obrigatória");
         }
+        if (custo == null || custo.signum() <= 0) {
+            throw new RegraDeNegocioException("Preço da mensagem inválido");
+        }
         return new Mensagem(UUID.randomUUID(), conversaId, campanhaId, Remetente.CLIENTE,
                 conteudo == null ? "" : conteudo.strip(), midia, prioridade, StatusMensagem.ENFILEIRADA,
-                prioridade.custo(), 0, null, agora, agora);
+                custo, 0, null, agora, agora);
     }
 
     public static void validarConteudo(String conteudo, Midia midia) {

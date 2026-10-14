@@ -8,6 +8,9 @@ spring:
     url: ${ARCHAT_DB_URL:jdbc:postgresql://localhost:5433/archat}
     username: ${ARCHAT_DB_USUARIO:archat}
     password: ${ARCHAT_DB_SENHA:archat}
+  flyway:
+    # migrations comuns + as específicas de cada banco (postgresql em produção, h2 nos testes)
+    locations: classpath:db/migration,classpath:db/vendor/{vendor}
   jpa:
     open-in-view: false
     hibernate:

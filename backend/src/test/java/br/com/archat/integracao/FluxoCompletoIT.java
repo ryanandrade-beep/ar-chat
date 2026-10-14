@@ -381,6 +381,50 @@ class FluxoCompletoIT {
     }
 
     @Test
+    void planoDefinePrecoDaMensagemMensalidadeELimiteDeOperadores() throws Exception {
+        String admin = token(post("/admin/auth"), """
+                {"login": "admin", "password": "admin12345"}""");
+        String plano = corpo(executar(post("/plans"), admin, """
+                {"name": "Essencial", "monthlyFee": 49.90, "includedOperators": 1, "normalPrice": 0.20,
+                 "urgentPrice": 0.40}""").andExpect(status().isCreated()), "$.id");
+        executar(post("/plans"), admin, """
+                {"name": "essencial", "monthlyFee": 10, "includedOperators": 1, "normalPrice": 0.20,
+                 "urgentPrice": 0.40}""").andExpect(status().isUnprocessableEntity());
+
+        String dono = corpo(mvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content("""
+                {"name": "Açaí da Praça", "email": "dono@acai.com", "phone": "44966665555",
+                 "documentId": "15350946056", "documentType": "CPF", "password": "acai20260",
+                 "passwordConfirmation": "acai20260", "acceptTerms": true}""")), "$.token");
+        String clienteId = corpo(executar(get("/clients/me"), dono, null), "$.id");
+
+        executar(put("/clients/" + clienteId + "/subscription"), admin, """
+                {"planId": "%s"}""".formatted(plano)).andExpect(status().isUnprocessableEntity());
+        executar(post("/clients/" + clienteId + "/credits"), admin, """
+                {"amount": 60}""").andExpect(status().isOk());
+        executar(put("/clients/" + clienteId + "/subscription"), admin, """
+                {"planId": "%s"}""".formatted(plano))
+                .andExpect(jsonPath("$.plan.name").value("Essencial"))
+                .andExpect(jsonPath("$.status").value("active"));
+        executar(get("/clients/me"), dono, null).andExpect(jsonPath("$.balance").value(10.10));
+        executar(get("/clients/me/transactions"), dono, null).andExpect(jsonPath("$[0].type").value("monthly_fee"));
+
+        String contato = corpo(executar(post("/recipients"), dono, """
+                {"name": "Bia", "phone": "5544944443333"}"""), "$.id");
+        executar(post("/messages"), dono, """
+                {"recipientId": "%s", "content": "Açaí pronto!", "priority": "urgent"}""".formatted(contato))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.cost").value(0.40));
+
+        executar(post("/operators"), dono, """
+                {"name": "Léo", "email": "leo@acai.com", "password": "atende2026"}""").andExpect(status().isCreated());
+        executar(post("/operators"), dono, """
+                {"name": "Lia", "email": "lia@acai.com", "password": "atende2026"}""")
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("1 operador")));
+        executar(get("/clients/me/subscription"), dono, null).andExpect(jsonPath("$.activeOperators").value(1));
+    }
+
+    @Test
     void canaisMostramWhatsAppBusinessEmBreve() throws Exception {
         String admin = token(post("/admin/auth"), """
                 {"login": "admin", "password": "admin12345"}""");
