@@ -1,6 +1,8 @@
 package br.com.archat.infraestrutura.envio.zapi;
 
+import br.com.archat.aplicacao.porta.ArquivoRepositorio;
 import br.com.archat.aplicacao.porta.EnvioMensagemGateway;
+import br.com.archat.dominio.arquivo.Arquivo;
 import br.com.archat.dominio.mensagem.Midia;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +19,11 @@ class EnvioMensagemZApi implements EnvioMensagemGateway {
     private static final String DDI_BRASIL = "55";
 
     private final ClienteZApi zapi;
+    private final ArquivoRepositorio arquivos;
 
-    EnvioMensagemZApi(ClienteZApi zapi) {
+    EnvioMensagemZApi(ClienteZApi zapi, ArquivoRepositorio arquivos) {
         this.zapi = zapi;
+        this.arquivos = arquivos;
     }
 
     @Override
@@ -42,12 +46,20 @@ class EnvioMensagemZApi implements EnvioMensagemGateway {
         if (midia == null) {
             return zapi.enviarTexto(telefone, envio.conteudo());
         }
+        String conteudo = conteudoParaZApi(midia);
         return switch (midia.tipo()) {
-            case IMAGEM -> zapi.enviarImagem(telefone, midia.url(), legenda);
-            case DOCUMENTO -> zapi.enviarDocumento(telefone, midia.url(), midia.extensao(), midia.nomeArquivo(), legenda);
-            case AUDIO -> zapi.enviarAudio(telefone, midia.url());
-            case VIDEO -> zapi.enviarVideo(telefone, midia.url(), legenda);
+            case IMAGEM -> zapi.enviarImagem(telefone, conteudo, legenda);
+            case DOCUMENTO -> zapi.enviarDocumento(telefone, conteudo, midia.extensao(), midia.nomeArquivo(), legenda);
+            case AUDIO -> zapi.enviarAudio(telefone, conteudo);
+            case VIDEO -> zapi.enviarVideo(telefone, conteudo, legenda);
         };
+    }
+
+    private String conteudoParaZApi(Midia midia) {
+        return Arquivo.idDaUrl(midia.url())
+                .map(id -> arquivos.buscarPorId(id).orElseThrow(() -> new IllegalStateException("Arquivo não encontrado")))
+                .map(Arquivo::comoDataUri)
+                .orElse(midia.url());
     }
 
     static String rota(Midia midia) {

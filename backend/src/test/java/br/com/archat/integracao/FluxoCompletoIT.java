@@ -23,8 +23,10 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -320,6 +322,19 @@ class FluxoCompletoIT {
         executar(post("/messages"), horti, """
                 {"conversationId": "%s", "priority": "normal", "media": {"type": "sticker", "url": "https://x.com/a"}}"""
                 .formatted(conversaId)).andExpect(status().is4xxClientError());
+
+        String url = corpo(mvc.perform(multipart("/media").file(new org.springframework.mock.web.MockMultipartFile(
+                        "file", "tabela.pdf", "application/pdf", "%PDF-1.4 teste".getBytes()))
+                        .header("Authorization", "Bearer " + horti))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.type").value("document")), "$.url");
+        executar(post("/messages"), horti, """
+                {"conversationId": "%s", "priority": "normal", "media": {"type": "document", "url": "%s", "fileName": "tabela.pdf"}}"""
+                .formatted(conversaId, url)).andExpect(status().isCreated());
+        mvc.perform(get(url).header("Authorization", "Bearer " + horti))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/pdf"))
+                .andExpect(content().bytes("%PDF-1.4 teste".getBytes()));
 
         executar(post("/campaigns"), horti, """
                 {"name": "Encarte da semana", "priority": "normal", "allOptedIn": true,

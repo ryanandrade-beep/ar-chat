@@ -1,6 +1,7 @@
 package br.com.archat.infraestrutura.config;
 
 import br.com.archat.aplicacao.administrador.GerenciarAdministradoresUseCase;
+import br.com.archat.aplicacao.arquivo.GuardarArquivoUseCase;
 import br.com.archat.aplicacao.atendimento.GerenciarAtendimentoUseCase;
 import br.com.archat.aplicacao.atendimento.ReceberMensagemUseCase;
 import br.com.archat.aplicacao.atendimento.RegistroDeAtendimento;
@@ -34,6 +35,7 @@ import br.com.archat.aplicacao.operador.GerenciarOperadoresUseCase;
 import br.com.archat.aplicacao.plano.GerenciarPlanosUseCase;
 import br.com.archat.aplicacao.plano.PlanoDoCliente;
 import br.com.archat.aplicacao.porta.AdministradorRepositorio;
+import br.com.archat.aplicacao.porta.ArquivoRepositorio;
 import br.com.archat.aplicacao.porta.AssinaturaRepositorio;
 import br.com.archat.aplicacao.porta.AtendimentoRepositorio;
 import br.com.archat.aplicacao.porta.CampanhaRepositorio;
@@ -276,6 +278,11 @@ class CasosDeUsoConfig {
     PainelDoGestorUseCase painelDoGestor(AtendimentoRepositorio atendimentos, ConversaRepositorio conversas,
                                          DestinatarioRepositorio destinatarios, ZoneId fuso) {
         return new PainelDoGestorUseCase(atendimentos, conversas, destinatarios, fuso);
+    }
+
+    @Bean
+    GuardarArquivoUseCase guardarArquivo(ArquivoRepositorio arquivos, UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio) {
+        return new GuardarArquivoUseCase(arquivos, unidadeDeTrabalho, relogio);
     }
 
     @Bean
