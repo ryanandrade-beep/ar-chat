@@ -122,7 +122,7 @@ public class GerenciarAtendimentoUseCase {
                     .filter(m -> m.remetente() == Remetente.DESTINATARIO && m.idExterno() != null)
                     .max(Comparator.comparing(Mensagem::criadaEm))
                     .ifPresent(ultima -> destinatarios.buscarPorId(conversa.destinatarioId())
-                            .ifPresent(d -> canal.marcarComoLida(d.telefone(), ultima.idExterno())));
+                            .ifPresent(d -> canal.marcarComoLida(clienteId, d.telefone(), ultima.idExterno())));
         } catch (RuntimeException e) {
         }
     }

@@ -1,5 +1,6 @@
 package br.com.archat.apresentacao.controlador;
 
+import br.com.archat.aplicacao.atendimento.AtendimentoEmEquipeUseCase;
 import br.com.archat.aplicacao.atendimento.GerenciarAtendimentoUseCase;
 import br.com.archat.aplicacao.atendimento.ReceberMensagemUseCase;
 import br.com.archat.aplicacao.conversa.ConsultarConversasUseCase;
@@ -9,6 +10,7 @@ import br.com.archat.aplicacao.operador.GerenciarOperadoresUseCase;
 import br.com.archat.aplicacao.porta.FiltroMensagens;
 import br.com.archat.apresentacao.dto.ApiEnums;
 import br.com.archat.apresentacao.dto.ConversaDtos.ConversationResponse;
+import br.com.archat.apresentacao.dto.ConversaDtos.Participant;
 import br.com.archat.apresentacao.dto.MensagemDtos.MessageResponse;
 import br.com.archat.apresentacao.dto.MensagemDtos.SimulatedReplyRequest;
 import br.com.archat.apresentacao.seguranca.ClienteAutenticado;
@@ -44,9 +46,12 @@ class ConversaController {
     private final GerenciarOperadoresUseCase operadores;
     private final GerenciarDepartamentosUseCase departamentos;
 
+    private final AtendimentoEmEquipeUseCase equipe;
+
     ConversaController(ConsultarConversasUseCase conversas, ConsultarMensagensUseCase mensagens,
                        GerenciarAtendimentoUseCase atendimento, ReceberMensagemUseCase receber,
-                       GerenciarOperadoresUseCase operadores, GerenciarDepartamentosUseCase departamentos) {
+                       GerenciarOperadoresUseCase operadores, GerenciarDepartamentosUseCase departamentos, AtendimentoEmEquipeUseCase equipe) {
+        this.equipe = equipe;
         this.operadores = operadores;
         this.departamentos = departamentos;
         this.conversas = conversas;
@@ -65,9 +70,12 @@ class ConversaController {
         Map<UUID, String> nomes = nomesDosOperadores(cliente);
         Map<UUID, String> setores = nomesDosDepartamentos(cliente);
         return conversas.listar(cliente.id(), search, status == null ? null : ApiEnums.atendimento(status)).stream()
-                .filter(r -> responsavelConfere(r.conversa().operadorId(), assigned, cliente))
+                .filter(r -> "me".equals(assigned)
+                        ? cliente.atendenteId().equals(r.conversa().operadorId())
+                                || equipe.participantes(r.conversa().id()).contains(cliente.atendenteId())
+                        : responsavelConfere(r.conversa().operadorId(), assigned, cliente))
                 .filter(r -> department == null || department.equals(r.conversa().departamentoId()))
-                .map(r -> ConversationResponse.de(r, nomes, setores)).toList();
+                .map(r -> ConversationResponse.de(r, nomes, setores, participantesDe(r.conversa().id(), nomes))).toList();
     }
 
     @PutMapping("/{id}/department")
@@ -79,6 +87,44 @@ class ConversaController {
     }
 
     record DepartmentRequest(UUID departmentId) {
+    }
+
+    @PostMapping("/{id}/join")
+    @Operation(summary = "Participa do atendimento (responde junto com o responsável)")
+    ConversationResponse participar(ClienteAutenticado cliente, @PathVariable UUID id) {
+        equipe.participar(cliente.id(), id, cliente.atendenteId());
+        return resposta(cliente, id);
+    }
+
+    @PostMapping("/{id}/leave")
+    @Operation(summary = "Deixa de participar do atendimento")
+    ConversationResponse sair(ClienteAutenticado cliente, @PathVariable UUID id) {
+        equipe.sair(cliente.id(), id, cliente.atendenteId());
+        return resposta(cliente, id);
+    }
+
+    @PostMapping("/{id}/notes")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Nota interna para a equipe (não vai para o WhatsApp e não é cobrada)")
+    MessageResponse nota(ClienteAutenticado cliente, @PathVariable UUID id, @Valid @RequestBody NoteRequest r) {
+        return MessageResponse.de(equipe.notaInterna(cliente.id(), id, cliente.atendenteId(), r.content()));
+    }
+
+    @PostMapping("/{id}/transfer")
+    @Operation(summary = "Transfere para outro operador e/ou departamento, com recado (nota interna) para quem recebe")
+    ConversationResponse transferir(ClienteAutenticado cliente, @PathVariable UUID id, @RequestBody TransferRequest r) {
+        equipe.transferir(cliente.id(), id, r.operatorId(), r.departmentId(), r.note(), cliente.atendenteId());
+        return resposta(cliente, id);
+    }
+
+    record NoteRequest(@jakarta.validation.constraints.NotBlank String content) {
+    }
+
+    record TransferRequest(UUID operatorId, UUID departmentId, String note) {
+    }
+
+    private List<Participant> participantesDe(UUID conversaId, Map<UUID, String> nomes) {
+        return equipe.participantes(conversaId).stream().map(id -> new Participant(id, nomes.getOrDefault(id, "?"))).toList();
     }
 
     private Map<UUID, String> nomesDosDepartamentos(ClienteAutenticado cliente) {
@@ -100,7 +146,7 @@ class ConversaController {
     private static boolean responsavelConfere(UUID responsavel, String filtro, ClienteAutenticado cliente) {
         if (filtro == null || filtro.isBlank() || filtro.equals("all")) return true;
         if (filtro.equals("none")) return responsavel == null;
-        if (filtro.equals("me")) return responsavel != null && responsavel.equals(cliente.operadorId());
+        if (filtro.equals("me")) return false;
         return responsavel != null && responsavel.toString().equals(filtro);
     }
 
@@ -111,8 +157,9 @@ class ConversaController {
     }
 
     private ConversationResponse resposta(ClienteAutenticado cliente, UUID conversaId) {
-        return ConversationResponse.de(conversas.buscar(cliente.id(), conversaId), nomesDosOperadores(cliente),
-                nomesDosDepartamentos(cliente));
+        Map<UUID, String> nomes = nomesDosOperadores(cliente);
+        return ConversationResponse.de(conversas.buscar(cliente.id(), conversaId), nomes, nomesDosDepartamentos(cliente),
+                participantesDe(conversaId, nomes));
     }
 
     @GetMapping("/summary")

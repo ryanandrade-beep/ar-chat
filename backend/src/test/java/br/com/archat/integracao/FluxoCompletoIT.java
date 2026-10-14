@@ -23,8 +23,10 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -321,6 +323,33 @@ class FluxoCompletoIT {
                 {"conversationId": "%s", "priority": "normal", "media": {"type": "sticker", "url": "https://x.com/a"}}"""
                 .formatted(conversaId)).andExpect(status().is4xxClientError());
 
+        String url = corpo(mvc.perform(multipart("/media").file(new org.springframework.mock.web.MockMultipartFile(
+                        "file", "tabela.pdf", "application/pdf", "%PDF-1.4 teste".getBytes()))
+                        .header("Authorization", "Bearer " + horti))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.type").value("document")), "$.url");
+        executar(post("/messages"), horti, """
+                {"conversationId": "%s", "priority": "normal", "media": {"type": "document", "url": "%s", "fileName": "tabela.pdf"}}"""
+                .formatted(conversaId, url)).andExpect(status().isCreated());
+        mvc.perform(get(url).header("Authorization", "Bearer " + horti))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/pdf"))
+                .andExpect(content().bytes("%PDF-1.4 teste".getBytes()));
+
+        String contatoId = corpo(executar(post("/messages"), horti, """
+                {"conversationId": "%s", "priority": "normal", "contact": {"name": "Fornecedor de Banana", "phone": "(44) 98877-6655"}}"""
+                .formatted(conversaId)).andExpect(status().isCreated()), "$.id");
+        executar(get("/messages/" + contatoId), horti, null)
+                .andExpect(jsonPath("$.contact.name").value("Fornecedor de Banana"))
+                .andExpect(jsonPath("$.contact.phone").value("44988776655"));
+        mvc.perform(post("/webhooks/zapi/segredo-de-teste/received").contentType(MediaType.APPLICATION_JSON).content("""
+                {"messageId": "MSG-CONTATO-1", "phone": "5544966665555", "fromMe": false, "momment": 1632228900000,
+                 "type": "ReceivedCallback", "isGroup": false,
+                 "contact": {"displayName": "Cesar Baleco", "vCard": "BEGIN:VCARD", "phones": ["5544999999999"]}}"""))
+                .andExpect(jsonPath("$.registered").value(true));
+        executar(get("/conversations/" + conversaId), horti, null)
+                .andExpect(jsonPath("$.lastMessageContent").value("[Contato] Cesar Baleco"));
+
         executar(post("/campaigns"), horti, """
                 {"name": "Encarte da semana", "priority": "normal", "allOptedIn": true,
                  "media": {"type": "image", "url": "https://hortifruti.com/encarte.jpg"}}""")
@@ -414,6 +443,9 @@ class FluxoCompletoIT {
                 {"recipientId": "%s", "content": "Açaí pronto!", "priority": "urgent"}""".formatted(contato))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.cost").value(0.40));
+        executar(get("/conversations?assigned=me"), dono, null)
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].operatorName").value("Açaí da Praça"));
 
         executar(post("/operators"), dono, """
                 {"name": "Léo", "email": "leo@acai.com", "password": "atende2026"}""").andExpect(status().isCreated());
@@ -480,10 +512,74 @@ class FluxoCompletoIT {
     }
 
     @Test
+    void operadoresParticipamTrocamNotasETransferem() throws Exception {
+        String dono = corpo(mvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content("""
+                {"name": "Pet Shop Amigo", "email": "dono@amigo.com", "phone": "44911112222",
+                 "documentId": "73514628017", "documentType": "CPF", "password": "petshop2026",
+                 "passwordConfirmation": "petshop2026", "acceptTerms": true}""")), "$.token");
+        String clienteId = corpo(executar(get("/clients/me"), dono, null), "$.id");
+        String admin = token(post("/admin/auth"), """
+                {"login": "admin", "password": "admin12345"}""");
+        executar(post("/clients/" + clienteId + "/credits"), admin, """
+                {"amount": 10}""").andExpect(status().isOk());
+        executar(post("/operators"), dono, """
+                {"name": "Rita", "email": "rita@amigo.com", "password": "atende2026"}""").andExpect(status().isCreated());
+        String paulo = corpo(executar(post("/operators"), dono, """
+                {"name": "Paulo", "email": "paulo@amigo.com", "password": "atende2026"}"""), "$.id");
+        String banho = corpo(executar(post("/departments"), dono, """
+                {"name": "Banho e Tosa"}"""), "$.id");
+        String rita = token(post("/auth/login"), """
+                {"email": "rita@amigo.com", "password": "atende2026"}""");
+        String pauloToken = token(post("/auth/login"), """
+                {"email": "paulo@amigo.com", "password": "atende2026"}""");
+
+        String contato = corpo(executar(post("/recipients"), rita, """
+                {"name": "Dona Célia", "phone": "5544977778888"}"""), "$.id");
+        String conversa = corpo(executar(post("/messages"), rita, """
+                {"recipientId": "%s", "content": "O Thor já está pronto!", "priority": "normal"}""".formatted(contato))
+                .andExpect(status().isCreated()), "$.conversationId");
+
+        String resposta = """
+                {"conversationId": "%s", "content": "Pode buscar até 18h", "priority": "normal"}""".formatted(conversa);
+        executar(post("/messages"), pauloToken, resposta).andExpect(status().isUnprocessableEntity());
+        executar(post("/conversations/" + conversa + "/join"), pauloToken, null)
+                .andExpect(jsonPath("$.participants[0].name").value("Paulo"));
+        executar(post("/messages"), pauloToken, resposta).andExpect(status().isCreated());
+        executar(get("/conversations?assigned=me"), pauloToken, null).andExpect(jsonPath("$.length()").value(1));
+
+        executar(post("/conversations/" + conversa + "/notes"), rita, """
+                {"content": "Paulo, confirma o horário com a tosa?"}""")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.internal").value(true))
+                .andExpect(jsonPath("$.cost").value(0));
+
+        executar(post("/conversations/" + conversa + "/transfer"), rita, """
+                {"operatorId": "%s", "departmentId": "%s", "note": "Cliente quer agendar tosa"}""".formatted(paulo, banho))
+                .andExpect(jsonPath("$.operatorName").value("Paulo"))
+                .andExpect(jsonPath("$.departmentName").value("Banho e Tosa"))
+                .andExpect(jsonPath("$.participants.length()").value(0));
+        executar(get("/conversations/" + conversa + "/messages"), dono, null)
+                .andExpect(jsonPath("$[-1].internal").value(true))
+                .andExpect(jsonPath("$[-1].content").value(
+                        "Transferido para o departamento Banho e Tosa e para Paulo por Rita: Cliente quer agendar tosa"));
+    }
+
+    @Test
     void canaisMostramWhatsAppBusinessEmBreve() throws Exception {
         String admin = token(post("/admin/auth"), """
                 {"login": "admin", "password": "admin12345"}""");
-        executar(get("/channels"), admin, null)
+        String empresa = corpo(mvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content("""
+                {"name": "Floricultura Ipê", "email": "dono@ipe.com", "phone": "44922221111",
+                 "documentId": "47193945823", "documentType": "CPF", "password": "flores2026",
+                 "passwordConfirmation": "flores2026", "acceptTerms": true}""")), "$.token");
+        executar(get("/channels"), admin, null).andExpect(status().isForbidden());
+        executar(get("/whatsapp/qr-code"), admin, null).andExpect(status().isForbidden());
+        String clienteId = corpo(executar(get("/clients/me"), empresa, null), "$.id");
+        executar(put("/clients/" + clienteId + "/whatsapp-instance"), admin, """
+                {"instanceId": "3F4B2299E56411F97FFECA692CFECF87", "token": "4D6D0C717E997B6397E9C534"}""")
+                .andExpect(jsonPath("$.dedicated").value(true))
+                .andExpect(jsonPath("$.tokenMasked").value("4D6D…C534"));
+        executar(get("/channels"), empresa, null)
                 .andExpect(jsonPath("$[0].id").value("whatsapp_web"))
                 .andExpect(jsonPath("$[0].available").value(true))
                 .andExpect(jsonPath("$[1].id").value("whatsapp_business"))

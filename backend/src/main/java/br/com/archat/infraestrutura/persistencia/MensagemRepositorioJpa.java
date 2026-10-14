@@ -41,6 +41,8 @@ class MensagemRepositorioJpa implements MensagemRepositorio {
                 m.prioridade(), m.status(), m.custo(), m.tentativas(), m.idExterno(), m.criadaEm(), m.atualizadaEm());
         entidade.definirMidia(m.midia());
         entidade.definirAutomatica(m.automatica());
+        entidade.definirContato(m.contato());
+        entidade.definirAutoria(m.operadorId(), m.interna());
         jpa.save(entidade);
     }
 
@@ -136,6 +138,6 @@ class MensagemRepositorioJpa implements MensagemRepositorio {
     private static Mensagem paraDominio(MensagemEntity e) {
         return Mensagem.reconstituir(e.getId(), e.getConversaId(), e.getCampanhaId(), e.getRemetente(), e.getConteudo(), e.getMidia(), e.getPrioridade(),
                 e.getStatus(), e.getCusto(), e.getTentativas(), e.getIdExterno(), e.getCriadaEm(), e.getAtualizadaEm(),
-                e.isAutomatica());
+                e.isAutomatica()).comContato(e.getContato()).comAutoria(e.getOperadorId(), e.isInterna());
     }
 }

@@ -45,6 +45,15 @@ public class GerenciarOperadoresUseCase {
         this.relogio = relogio;
     }
 
+    public Operador perfilDoDono(UUID clienteId, String nomeDoDono) {
+        return operadores.listarPorCliente(clienteId).stream().filter(Operador::dono).findFirst()
+                .orElseGet(() -> unidadeDeTrabalho.executar(() -> {
+                    Operador perfil = Operador.perfilDoDono(clienteId, nomeDoDono, relogio.instant());
+                    operadores.salvar(perfil);
+                    return perfil;
+                }));
+    }
+
     public List<Operador> listar(UUID clienteId) {
         return operadores.listarPorCliente(clienteId).stream()
                 .sorted(Comparator.comparing(Operador::nome, String.CASE_INSENSITIVE_ORDER)).toList();
@@ -87,7 +96,7 @@ public class GerenciarOperadoresUseCase {
 
     private void garantirVaga(UUID clienteId) {
         limite(clienteId).ifPresent(limite -> {
-            long ativos = operadores.listarPorCliente(clienteId).stream().filter(Operador::ativo).count();
+            long ativos = operadores.listarPorCliente(clienteId).stream().filter(o -> o.ativo() && !o.dono()).count();
             if (ativos >= limite) {
                 throw new RegraDeNegocioException("Seu plano inclui %d operador(es). Para contratar mais, mude de plano em Assinatura."
                         .formatted(limite));

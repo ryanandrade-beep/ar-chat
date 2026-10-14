@@ -1,6 +1,8 @@
 package br.com.archat.infraestrutura.config;
 
 import br.com.archat.aplicacao.administrador.GerenciarAdministradoresUseCase;
+import br.com.archat.aplicacao.arquivo.GuardarArquivoUseCase;
+import br.com.archat.aplicacao.atendimento.AtendimentoEmEquipeUseCase;
 import br.com.archat.aplicacao.atendimento.GerenciarAtendimentoUseCase;
 import br.com.archat.aplicacao.atendimento.ReceberMensagemUseCase;
 import br.com.archat.aplicacao.atendimento.RegistroDeAtendimento;
@@ -34,6 +36,7 @@ import br.com.archat.aplicacao.operador.GerenciarOperadoresUseCase;
 import br.com.archat.aplicacao.plano.GerenciarPlanosUseCase;
 import br.com.archat.aplicacao.plano.PlanoDoCliente;
 import br.com.archat.aplicacao.porta.AdministradorRepositorio;
+import br.com.archat.aplicacao.porta.ArquivoRepositorio;
 import br.com.archat.aplicacao.porta.AssinaturaRepositorio;
 import br.com.archat.aplicacao.porta.AtendimentoRepositorio;
 import br.com.archat.aplicacao.porta.CampanhaRepositorio;
@@ -46,9 +49,11 @@ import br.com.archat.aplicacao.porta.DepartamentoRepositorio;
 import br.com.archat.aplicacao.porta.DestinatarioRepositorio;
 import br.com.archat.aplicacao.porta.EnvioDeEmail;
 import br.com.archat.aplicacao.porta.EnvioMensagemGateway;
+import br.com.archat.aplicacao.porta.InstanciaWhatsAppRepositorio;
 import br.com.archat.aplicacao.porta.MensagemRepositorio;
 import br.com.archat.aplicacao.porta.MetricasFila;
 import br.com.archat.aplicacao.porta.OperadorRepositorio;
+import br.com.archat.aplicacao.porta.ParticipanteRepositorio;
 import br.com.archat.aplicacao.porta.PlanoRepositorio;
 import br.com.archat.aplicacao.porta.ServicoToken;
 import br.com.archat.aplicacao.porta.TransacaoRepositorio;
@@ -58,6 +63,7 @@ import br.com.archat.aplicacao.relatorio.RelatorioAtendimentosUseCase;
 import br.com.archat.aplicacao.relatorio.RelatorioCampanhasUseCase;
 import br.com.archat.aplicacao.relatorio.RelatorioFaturamentoUseCase;
 import br.com.archat.aplicacao.whatsapp.GerenciarConexaoWhatsAppUseCase;
+import br.com.archat.aplicacao.whatsapp.VincularInstanciaUseCase;
 import br.com.archat.infraestrutura.fila.FilaMensagensEmMemoria;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -276,6 +282,26 @@ class CasosDeUsoConfig {
     PainelDoGestorUseCase painelDoGestor(AtendimentoRepositorio atendimentos, ConversaRepositorio conversas,
                                          DestinatarioRepositorio destinatarios, ZoneId fuso) {
         return new PainelDoGestorUseCase(atendimentos, conversas, destinatarios, fuso);
+    }
+
+    @Bean
+    GuardarArquivoUseCase guardarArquivo(ArquivoRepositorio arquivos, UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio) {
+        return new GuardarArquivoUseCase(arquivos, unidadeDeTrabalho, relogio);
+    }
+
+    @Bean
+    VincularInstanciaUseCase vincularInstancia(InstanciaWhatsAppRepositorio instancias, ClienteRepositorio clientes,
+                                               UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio) {
+        return new VincularInstanciaUseCase(instancias, clientes, unidadeDeTrabalho, relogio);
+    }
+
+    @Bean
+    AtendimentoEmEquipeUseCase atendimentoEmEquipe(ConversaRepositorio conversas, ParticipanteRepositorio participantes,
+                                                   OperadorRepositorio operadores, DepartamentoRepositorio departamentos,
+                                                   MensagemRepositorio mensagens, UnidadeDeTrabalho unidadeDeTrabalho,
+                                                   Clock relogio) {
+        return new AtendimentoEmEquipeUseCase(conversas, participantes, operadores, departamentos, mensagens,
+                unidadeDeTrabalho, relogio);
     }
 
     @Bean

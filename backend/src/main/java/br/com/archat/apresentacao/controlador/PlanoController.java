@@ -83,7 +83,7 @@ class PlanoController {
     }
 
     private SubscriptionResponse assinatura(UUID clienteId) {
-        long ativos = operadores.listar(clienteId).stream().filter(Operador::ativo).count();
+        long ativos = operadores.listar(clienteId).stream().filter(o -> o.ativo() && !o.dono()).count();
         return planos.assinaturaDe(clienteId)
                 .map(a -> SubscriptionResponse.de(a, planos.buscar(a.planoId()), ativos))
                 .orElseGet(() -> new SubscriptionResponse(null, null, null, null, ativos));
