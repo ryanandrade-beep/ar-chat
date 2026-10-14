@@ -1,6 +1,7 @@
 package br.com.archat.aplicacao.mensagem;
 
 import br.com.archat.aplicacao.atendimento.RegistroDeAtendimento;
+import br.com.archat.aplicacao.plano.PlanoDoCliente;
 import br.com.archat.aplicacao.porta.ClienteRepositorio;
 import br.com.archat.aplicacao.porta.ConversaRepositorio;
 import br.com.archat.aplicacao.porta.DestinatarioRepositorio;
@@ -40,12 +41,24 @@ public class EnviarMensagemUseCase {
     private final Clock relogio;
     private final Duration tempoEstimadoPorMensagem;
     private final RegistroDeAtendimento atendimentos;
+    private final PlanoDoCliente planos;
 
     public EnviarMensagemUseCase(ClienteRepositorio clientes, DestinatarioRepositorio destinatarios,
                                  ConversaRepositorio conversas, MensagemRepositorio mensagens,
                                  TransacaoRepositorio transacoes, FilaMensagens fila,
                                  UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio,
                                  Duration tempoEstimadoPorMensagem, RegistroDeAtendimento atendimentos) {
+        this(clientes, destinatarios, conversas, mensagens, transacoes, fila, unidadeDeTrabalho, relogio,
+                tempoEstimadoPorMensagem, atendimentos, null);
+    }
+
+    public EnviarMensagemUseCase(ClienteRepositorio clientes, DestinatarioRepositorio destinatarios,
+                                 ConversaRepositorio conversas, MensagemRepositorio mensagens,
+                                 TransacaoRepositorio transacoes, FilaMensagens fila,
+                                 UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio,
+                                 Duration tempoEstimadoPorMensagem, RegistroDeAtendimento atendimentos,
+                                 PlanoDoCliente planos) {
+        this.planos = planos;
         this.clientes = clientes;
         this.destinatarios = destinatarios;
         this.conversas = conversas;
@@ -64,8 +77,10 @@ public class EnviarMensagemUseCase {
             Conversa conversa = conversaDoEnvio(comando);
             Cliente cliente = clientes.buscarPorIdParaAtualizacao(comando.clienteId())
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente"));
+            BigDecimal preco = comando.prioridade() == null ? null
+                    : planos == null ? comando.prioridade().custo() : planos.custo(cliente.id(), comando.prioridade());
             Mensagem mensagem = Mensagem.novaDoCliente(conversa.id(), null, comando.conteudo(), comando.midia(),
-                    comando.prioridade(), agora);
+                    comando.prioridade(), preco, agora);
 
             cliente.cobrar(mensagem.custo());
             conversa.registrar(mensagem);
