@@ -1,6 +1,7 @@
 package br.com.archat.apresentacao.erro;
 
 import br.com.archat.aplicacao.excecao.AcessoNegadoException;
+import br.com.archat.aplicacao.excecao.CanalIndisponivelException;
 import br.com.archat.aplicacao.excecao.NaoAutenticadoException;
 import br.com.archat.dominio.excecao.RecursoNaoEncontradoException;
 import br.com.archat.dominio.excecao.RegraDeNegocioException;
@@ -50,6 +51,11 @@ class TratadorDeErros {
     @ExceptionHandler(AcessoNegadoException.class)
     ResponseEntity<RespostaErro> acessoNegado(AcessoNegadoException e) {
         return resposta(HttpStatus.FORBIDDEN, e.getMessage(), null);
+    }
+
+    @ExceptionHandler(CanalIndisponivelException.class)
+    ResponseEntity<RespostaErro> canalIndisponivel(CanalIndisponivelException e) {
+        return resposta(HttpStatus.BAD_GATEWAY, e.getMessage(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

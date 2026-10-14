@@ -22,6 +22,15 @@ class ConexaoWhatsAppSimulada implements ConexaoWhatsApp {
     }
 
     @Override
+    public String codigoPorTelefone(String telefone) {
+        throw new RegraDeNegocioException("O envio está em modo simulado; configure archat.envio.provedor=zapi");
+    }
+
+    @Override
+    public void marcarComoLida(String telefoneOuGrupo, String idExterno) {
+    }
+
+    @Override
     public List<GrupoWhatsApp> listarGrupos(int pagina, int tamanhoPagina) {
         return List.of();
     }

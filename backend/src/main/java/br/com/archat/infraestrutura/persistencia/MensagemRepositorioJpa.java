@@ -37,8 +37,10 @@ class MensagemRepositorioJpa implements MensagemRepositorio {
 
     @Override
     public void salvar(Mensagem m) {
-        jpa.save(new MensagemEntity(m.id(), m.conversaId(), m.campanhaId(), m.remetente(), m.conteudo(), m.prioridade(), m.status(),
-                m.custo(), m.tentativas(), m.idExterno(), m.criadaEm(), m.atualizadaEm()));
+        MensagemEntity entidade = new MensagemEntity(m.id(), m.conversaId(), m.campanhaId(), m.remetente(), m.conteudo(),
+                m.prioridade(), m.status(), m.custo(), m.tentativas(), m.idExterno(), m.criadaEm(), m.atualizadaEm());
+        entidade.definirMidia(m.midia());
+        jpa.save(entidade);
     }
 
     @Override
@@ -131,7 +133,7 @@ class MensagemRepositorioJpa implements MensagemRepositorio {
     }
 
     private static Mensagem paraDominio(MensagemEntity e) {
-        return Mensagem.reconstituir(e.getId(), e.getConversaId(), e.getCampanhaId(), e.getRemetente(), e.getConteudo(), e.getPrioridade(),
+        return Mensagem.reconstituir(e.getId(), e.getConversaId(), e.getCampanhaId(), e.getRemetente(), e.getConteudo(), e.getMidia(), e.getPrioridade(),
                 e.getStatus(), e.getCusto(), e.getTentativas(), e.getIdExterno(), e.getCriadaEm(), e.getAtualizadaEm());
     }
 }

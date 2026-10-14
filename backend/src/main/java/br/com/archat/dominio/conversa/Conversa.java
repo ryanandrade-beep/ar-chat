@@ -42,7 +42,7 @@ public class Conversa {
     }
 
     public void registrar(Mensagem mensagem) {
-        String conteudo = mensagem.conteudo();
+        String conteudo = mensagem.resumo();
         ultimaMensagem = conteudo.length() > TAMANHO_RESUMO ? conteudo.substring(0, TAMANHO_RESUMO) : conteudo;
         dataUltimaMensagem = mensagem.criadaEm();
     }

@@ -2,7 +2,11 @@ package br.com.archat.integracao;
 
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
+import br.com.archat.aplicacao.porta.EnvioDeEmail;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
@@ -12,6 +16,10 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -27,6 +35,67 @@ class FluxoCompletoIT {
 
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private EmailsEnviados emails;
+
+    static class EmailsEnviados implements EnvioDeEmail {
+        final List<String> textos = new ArrayList<>();
+
+        @Override
+        public void enviar(String para, String assunto, String texto) {
+            textos.add(para + "|" + texto);
+        }
+    }
+
+    @TestConfiguration
+    static class ConfiguracaoDeEmail {
+        @Bean
+        @Primary
+        EmailsEnviados emailsEnviados() {
+            return new EmailsEnviados();
+        }
+    }
+
+    @Test
+    void criaContaEntraComEmailERecuperaASenha() throws Exception {
+        String cadastro = """
+                {"name": "Açougue do Zé", "email": "Ze@Acougue.com", "phone": "(44) 98888-7777",
+                 "documentId": "390.533.447-05", "documentType": "CPF", "password": "picanha2026",
+                 "passwordConfirmation": "picanha2026", "acceptTerms": %s}""";
+        mvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(cadastro.formatted("false")))
+                .andExpect(status().isUnprocessableEntity());
+        mvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(cadastro.formatted("true")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.client.planType").value("prepaid"))
+                .andExpect(jsonPath("$.client.balance").value(0));
+        mvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(cadastro.formatted("true")))
+                .andExpect(status().isUnprocessableEntity());
+
+        mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON).content("""
+                {"email": "ze@acougue.com", "password": "errada123"}""")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON).content("""
+                {"email": "ze@acougue.com", "password": "picanha2026"}""")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.client.name").value("Açougue do Zé"));
+
+        mvc.perform(post("/auth/forgot-password").contentType(MediaType.APPLICATION_JSON).content("""
+                {"email": "ninguem@exemplo.com"}""")).andExpect(status().isAccepted());
+        mvc.perform(post("/auth/forgot-password").contentType(MediaType.APPLICATION_JSON).content("""
+                {"email": "ze@acougue.com"}""")).andExpect(status().isAccepted());
+        Matcher codigo = Pattern.compile("ze@acougue.com\\|.*?(\\d{6})").matcher(emails.textos.getLast());
+        assertThat(codigo.find()).isTrue();
+
+        String redefinir = """
+                {"email": "ze@acougue.com", "code": "%s", "password": "costela2026", "passwordConfirmation": "costela2026"}""";
+        String errado = codigo.group(1).equals("000000") ? "111111" : "000000";
+        mvc.perform(post("/auth/reset-password").contentType(MediaType.APPLICATION_JSON).content(redefinir.formatted(errado)))
+                .andExpect(status().isUnprocessableEntity());
+        mvc.perform(post("/auth/reset-password").contentType(MediaType.APPLICATION_JSON).content(redefinir.formatted(codigo.group(1))))
+                .andExpect(status().isNoContent());
+        mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON).content("""
+                {"email": "ze@acougue.com", "password": "costela2026"}""")).andExpect(status().isOk());
+    }
 
     @Test
     void fluxoDeEnvioComCobrancaFilaERelatorios() throws Exception {
@@ -205,6 +274,57 @@ class FluxoCompletoIT {
 
         mvc.perform(post("/webhooks/zapi/segredo-errado/received").contentType(MediaType.APPLICATION_JSON)
                 .content("{}")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void enviaERecebeMidiaPeloAtendimento() throws Exception {
+        String admin = token(post("/admin/auth"), """
+                {"login": "admin", "password": "admin12345"}""");
+        executar(post("/clients"), admin, """
+                {"name": "Hortifruti", "documentId": "22333444000181", "documentType": "CNPJ",
+                 "planType": "prepaid", "initialAmount": 5}""").andExpect(status().isCreated());
+        String horti = token(post("/auth"), """
+                {"documentId": "22333444000181", "documentType": "CNPJ"}""");
+        executar(post("/recipients"), horti, """
+                {"name": "Carlos", "phone": "5544966665555", "acceptsMarketing": true}""").andExpect(status().isCreated());
+
+        mvc.perform(post("/webhooks/zapi/segredo-de-teste/received").contentType(MediaType.APPLICATION_JSON).content("""
+                {"isStatusReply": false, "senderLid": "81896604192873@lid", "connectedPhone": "554499999999",
+                 "waitingMessage": false, "isEdit": false, "isGroup": false, "isNewsletter": false,
+                 "instanceId": "A20DA9C0183A2D35A260F53F5D2B9244", "messageId": "MSG-IMAGEM-1",
+                 "phone": "5544966665555", "fromMe": false, "momment": 1632228828000, "status": "RECEIVED",
+                 "chatName": "name", "senderPhoto": "https://", "senderName": "name", "participantPhone": null,
+                 "participantLid": null, "photo": "https://", "broadcast": false, "type": "ReceivedCallback",
+                 "image": {"mimeType": "image/jpeg", "imageUrl": "https://", "thumbnailUrl": "https://",
+                           "downloadError": null, "caption": "", "width": 600, "height": 315, "viewOnce": true}}"""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.registered").value(true));
+        String conversaId = corpo(executar(get("/conversations?status=waiting"), horti, null)
+                .andExpect(jsonPath("$[0].lastMessageContent").value("[Imagem]")), "$[0].id");
+
+        String documentoId = corpo(executar(post("/messages"), horti, """
+                {"conversationId": "%s", "content": "Segue o encarte", "priority": "normal",
+                 "media": {"type": "document", "url": "https://hortifruti.com/encarte", "fileName": "encarte.pdf"}}"""
+                .formatted(conversaId)).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.cost").value(0.25)), "$.id");
+        executar(get("/messages/" + documentoId), horti, null)
+                .andExpect(jsonPath("$.media.type").value("document"))
+                .andExpect(jsonPath("$.media.fileName").value("encarte.pdf"))
+                .andExpect(jsonPath("$.content").value("Segue o encarte"));
+
+        executar(post("/messages"), horti, """
+                {"conversationId": "%s", "content": "ouça", "priority": "normal",
+                 "media": {"type": "audio", "url": "https://hortifruti.com/aviso.ogg"}}""".formatted(conversaId))
+                .andExpect(status().isUnprocessableEntity());
+        executar(post("/messages"), horti, """
+                {"conversationId": "%s", "priority": "normal", "media": {"type": "sticker", "url": "https://x.com/a"}}"""
+                .formatted(conversaId)).andExpect(status().is4xxClientError());
+
+        executar(post("/campaigns"), horti, """
+                {"name": "Encarte da semana", "priority": "normal", "allOptedIn": true,
+                 "media": {"type": "image", "url": "https://hortifruti.com/encarte.jpg"}}""")
+                .andExpect(status().isCreated());
+        executar(get("/campaigns"), horti, null).andExpect(jsonPath("$[0].media.type").value("image"));
     }
 
     @Test

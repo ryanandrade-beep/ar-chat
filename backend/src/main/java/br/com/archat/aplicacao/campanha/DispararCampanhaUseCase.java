@@ -17,6 +17,7 @@ import br.com.archat.dominio.excecao.RegraDeNegocioException;
 import br.com.archat.dominio.excecao.SaldoInsuficienteException;
 import br.com.archat.dominio.financeiro.Transacao;
 import br.com.archat.dominio.mensagem.Mensagem;
+import br.com.archat.dominio.mensagem.Midia;
 import br.com.archat.dominio.mensagem.Prioridade;
 
 import java.math.BigDecimal;
@@ -65,7 +66,8 @@ public class DispararCampanhaUseCase {
             Cliente cliente = clientes.buscarPorIdParaAtualizacao(comando.clienteId())
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente"));
             List<Destinatario> publico = publicoDaCampanha(comando);
-            Campanha campanha = Campanha.nova(cliente.id(), comando.nome(), comando.conteudo(), comando.prioridade(),
+            Campanha campanha = Campanha.nova(cliente.id(), comando.nome(), comando.conteudo(), comando.midia(),
+                    comando.prioridade(),
                     publico.size(), agora);
             garantirSaldoParaTudo(cliente, campanha);
 
@@ -112,7 +114,7 @@ public class DispararCampanhaUseCase {
         Conversa conversa = conversas.buscarPorDestinatario(destinatario.id())
                 .orElseGet(() -> Conversa.iniciar(cliente.id(), destinatario.id()));
         Mensagem mensagem = Mensagem.novaDoCliente(conversa.id(), campanha.id(), campanha.conteudo(),
-                campanha.prioridade(), agora);
+                campanha.midia(), campanha.prioridade(), agora);
         cliente.cobrar(mensagem.custo());
         conversa.registrar(mensagem);
         conversas.salvar(conversa);
@@ -121,8 +123,13 @@ public class DispararCampanhaUseCase {
         return mensagem;
     }
 
-    public record Comando(UUID clienteId, String nome, String conteudo, Prioridade prioridade,
+    public record Comando(UUID clienteId, String nome, String conteudo, Midia midia, Prioridade prioridade,
                           List<UUID> destinatarioIds, boolean todosQueAceitamOfertas) {
+
+        public Comando(UUID clienteId, String nome, String conteudo, Prioridade prioridade,
+                       List<UUID> destinatarioIds, boolean todosQueAceitamOfertas) {
+            this(clienteId, nome, conteudo, null, prioridade, destinatarioIds, todosQueAceitamOfertas);
+        }
     }
 
     public record CampanhaDisparada(Campanha campanha, List<Mensagem> mensagens, BigDecimal disponivel) {

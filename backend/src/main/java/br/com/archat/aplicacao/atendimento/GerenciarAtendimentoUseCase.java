@@ -1,15 +1,22 @@
 package br.com.archat.aplicacao.atendimento;
 
 import br.com.archat.aplicacao.porta.AtendimentoRepositorio;
+import br.com.archat.aplicacao.porta.ConexaoWhatsApp;
 import br.com.archat.aplicacao.porta.ConversaRepositorio;
+import br.com.archat.aplicacao.porta.DestinatarioRepositorio;
+import br.com.archat.aplicacao.porta.FiltroMensagens;
+import br.com.archat.aplicacao.porta.MensagemRepositorio;
 import br.com.archat.aplicacao.porta.UnidadeDeTrabalho;
 import br.com.archat.dominio.atendimento.Atendimento;
 import br.com.archat.dominio.atendimento.StatusAtendimento;
 import br.com.archat.dominio.conversa.Conversa;
 import br.com.archat.dominio.excecao.RecursoNaoEncontradoException;
 import br.com.archat.dominio.excecao.RegraDeNegocioException;
+import br.com.archat.dominio.mensagem.Mensagem;
+import br.com.archat.dominio.mensagem.Remetente;
 
 import java.time.Clock;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
@@ -22,13 +29,26 @@ public class GerenciarAtendimentoUseCase {
     private final AtendimentoRepositorio atendimentos;
     private final UnidadeDeTrabalho unidadeDeTrabalho;
     private final Clock relogio;
+    private final MensagemRepositorio mensagens;
+    private final DestinatarioRepositorio destinatarios;
+    private final ConexaoWhatsApp canal;
 
     public GerenciarAtendimentoUseCase(ConversaRepositorio conversas, AtendimentoRepositorio atendimentos,
                                        UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio) {
+        this(conversas, atendimentos, unidadeDeTrabalho, relogio, null, null, null);
+    }
+
+    public GerenciarAtendimentoUseCase(ConversaRepositorio conversas, AtendimentoRepositorio atendimentos,
+                                       UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio,
+                                       MensagemRepositorio mensagens, DestinatarioRepositorio destinatarios,
+                                       ConexaoWhatsApp canal) {
         this.conversas = conversas;
         this.atendimentos = atendimentos;
         this.unidadeDeTrabalho = unidadeDeTrabalho;
         this.relogio = relogio;
+        this.mensagens = mensagens;
+        this.destinatarios = destinatarios;
+        this.canal = canal;
     }
 
     public Conversa colocarEmEspera(UUID clienteId, UUID conversaId) {
@@ -44,12 +64,28 @@ public class GerenciarAtendimentoUseCase {
     }
 
     public Conversa marcarComoLida(UUID clienteId, UUID conversaId) {
-        return unidadeDeTrabalho.executar(() -> {
+        Conversa lida = unidadeDeTrabalho.executar(() -> {
             Conversa conversa = daEmpresa(clienteId, conversaId);
             conversa.marcarComoLida();
             conversas.salvar(conversa);
             return conversa;
         });
+        avisarLeituraAoCanal(clienteId, lida);
+        return lida;
+    }
+
+    private void avisarLeituraAoCanal(UUID clienteId, Conversa conversa) {
+        if (canal == null) {
+            return;
+        }
+        try {
+            mensagens.listar(new FiltroMensagens(clienteId, conversa.id(), null, null)).stream()
+                    .filter(m -> m.remetente() == Remetente.DESTINATARIO && m.idExterno() != null)
+                    .max(Comparator.comparing(Mensagem::criadaEm))
+                    .ifPresent(ultima -> destinatarios.buscarPorId(conversa.destinatarioId())
+                            .ifPresent(d -> canal.marcarComoLida(d.telefone(), ultima.idExterno())));
+        } catch (RuntimeException e) {
+        }
     }
 
     public Map<StatusAtendimento, Long> resumo(UUID clienteId) {

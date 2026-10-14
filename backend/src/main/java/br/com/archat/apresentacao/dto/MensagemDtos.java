@@ -2,7 +2,9 @@ package br.com.archat.apresentacao.dto;
 
 import br.com.archat.aplicacao.mensagem.EnviarMensagemUseCase.MensagemEnviada;
 import br.com.archat.dominio.mensagem.Mensagem;
+import br.com.archat.dominio.mensagem.Midia;
 import br.com.archat.dominio.mensagem.Remetente;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -16,8 +18,23 @@ public final class MensagemDtos {
     }
 
     public record SendMessageRequest(UUID conversationId, UUID recipientId,
-                                     @NotBlank @Size(max = Mensagem.TAMANHO_MAXIMO) String content,
+                                     @Size(max = Mensagem.TAMANHO_MAXIMO) String content, @Valid MediaRequest media,
                                      @NotBlank String priority, String channel) {
+    }
+
+    public record MediaRequest(@NotBlank String type, @NotBlank @Size(max = Midia.TAMANHO_MAXIMO_URL) String url,
+                               @Size(max = 255) String fileName) {
+
+        public static Midia paraDominio(MediaRequest media) {
+            return media == null ? null : new Midia(ApiEnums.midia(media.type()), media.url(), media.fileName());
+        }
+    }
+
+    public record MediaResponse(String type, String url, String fileName) {
+
+        public static MediaResponse de(Midia midia) {
+            return midia == null ? null : new MediaResponse(ApiEnums.midia(midia.tipo()), midia.url(), midia.nomeArquivo());
+        }
     }
 
     public record SimulatedReplyRequest(@NotBlank @Size(max = Mensagem.TAMANHO_MAXIMO) String content) {
@@ -36,11 +53,12 @@ public final class MensagemDtos {
     public record SentBy(String type) {
     }
 
-    public record MessageResponse(UUID id, UUID conversationId, UUID campaignId, String content, SentBy sentBy, Instant timestamp,
+    public record MessageResponse(UUID id, UUID conversationId, UUID campaignId, String content, MediaResponse media,
+                                  SentBy sentBy, Instant timestamp,
                                   String priority, String status, BigDecimal cost, int attempts, Instant updatedAt) {
 
         public static MessageResponse de(Mensagem m) {
-            return new MessageResponse(m.id(), m.conversaId(), m.campanhaId(), m.conteudo(),
+            return new MessageResponse(m.id(), m.conversaId(), m.campanhaId(), m.conteudo(), MediaResponse.de(m.midia()),
                     new SentBy(m.remetente() == Remetente.CLIENTE ? "client" : "user"), m.criadaEm(),
                     ApiEnums.prioridade(m.prioridade()), ApiEnums.status(m.status()), m.custo(), m.tentativas(),
                     m.atualizadaEm());

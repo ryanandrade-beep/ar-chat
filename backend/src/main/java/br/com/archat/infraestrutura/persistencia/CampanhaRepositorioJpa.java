@@ -22,8 +22,10 @@ class CampanhaRepositorioJpa implements CampanhaRepositorio {
 
     @Override
     public void salvar(Campanha c) {
-        jpa.save(new CampanhaEntity(c.id(), c.clienteId(), c.nome(), c.conteudo(), c.prioridade(),
-                c.totalDestinatarios(), c.custoTotal(), c.criadaEm()));
+        CampanhaEntity entidade = new CampanhaEntity(c.id(), c.clienteId(), c.nome(), c.conteudo(), c.prioridade(),
+                c.totalDestinatarios(), c.custoTotal(), c.criadaEm());
+        entidade.definirMidia(c.midia());
+        jpa.save(entidade);
     }
 
     @Override
@@ -45,7 +47,7 @@ class CampanhaRepositorioJpa implements CampanhaRepositorio {
     }
 
     private static Campanha paraDominio(CampanhaEntity e) {
-        return new Campanha(e.getId(), e.getClienteId(), e.getNome(), e.getConteudo(), e.getPrioridade(),
+        return new Campanha(e.getId(), e.getClienteId(), e.getNome(), e.getConteudo(), e.getMidia(), e.getPrioridade(),
                 e.getTotalDestinatarios(), e.getCustoTotal(), e.getCriadaEm());
     }
 }

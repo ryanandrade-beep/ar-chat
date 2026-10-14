@@ -1,6 +1,7 @@
 package br.com.archat.infraestrutura.envio.zapi;
 
 import br.com.archat.infraestrutura.config.ArChatPropriedades;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -41,6 +42,40 @@ class ClienteZApi {
                 .retrieve().body(RespostaEnvio.class);
     }
 
+    RespostaEnvio enviarImagem(String telefone, String link, String legenda) {
+        return post("/send-image", new EnvioImagem(telefone, link, legenda));
+    }
+
+    RespostaEnvio enviarDocumento(String telefone, String link, String extensao, String nomeArquivo, String legenda) {
+        return http.post().uri("/send-document/{extensao}", extensao).contentType(MediaType.APPLICATION_JSON)
+                .body(new EnvioDocumento(telefone, link, nomeArquivo, legenda))
+                .retrieve().body(RespostaEnvio.class);
+    }
+
+    RespostaEnvio enviarAudio(String telefone, String link) {
+        return post("/send-audio", new EnvioAudio(telefone, link));
+    }
+
+    RespostaEnvio enviarVideo(String telefone, String link, String legenda) {
+        return post("/send-video", new EnvioVideo(telefone, link, legenda));
+    }
+
+    void lerMensagem(String telefone, String messageId) {
+        http.post().uri("/read-message").contentType(MediaType.APPLICATION_JSON)
+                .body(new LeituraMensagem(telefone, messageId))
+                .retrieve().toBodilessEntity();
+    }
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> codigoPorTelefone(String telefone) {
+        return http.get().uri("/phone-code/{telefone}", telefone).retrieve().body(Map.class);
+    }
+
+    private RespostaEnvio post(String rota, Object corpo) {
+        return http.post().uri(rota).contentType(MediaType.APPLICATION_JSON).body(corpo)
+                .retrieve().body(RespostaEnvio.class);
+    }
+
     RespostaStatus status() {
         return http.get().uri("/status").retrieve().body(RespostaStatus.class);
     }
@@ -65,6 +100,24 @@ class ClienteZApi {
     }
 
     record EnvioTexto(String phone, String message) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record EnvioImagem(String phone, String image, String caption) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record EnvioDocumento(String phone, String document, String fileName, String caption) {
+    }
+
+    record EnvioAudio(String phone, String audio) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record EnvioVideo(String phone, String video, String caption) {
+    }
+
+    record LeituraMensagem(String phone, String messageId) {
     }
 
     record RespostaEnvio(String zaapId, String messageId) {

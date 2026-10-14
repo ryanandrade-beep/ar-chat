@@ -84,7 +84,7 @@ public class ProcessarMensagemUseCase {
     private EnvioMensagemGateway.ResultadoEnvio tentarEnviar(Mensagem mensagem) {
         try {
             return envio.enviar(new EnvioMensagemGateway.Envio(mensagem.id(), telefoneDoDestinatario(mensagem),
-                    mensagem.conteudo(), mensagem.prioridade(), mensagem.tentativas()));
+                    mensagem.conteudo(), mensagem.midia(), mensagem.prioridade(), mensagem.tentativas()));
         } catch (RuntimeException erro) {
             return EnvioMensagemGateway.ResultadoEnvio.recusado();
         }

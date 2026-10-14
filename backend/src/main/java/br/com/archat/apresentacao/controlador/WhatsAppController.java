@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,6 +40,13 @@ class WhatsAppController {
         return new QrCodeResponse(conexao.qrCode());
     }
 
+    @GetMapping("/phone-code/{phone}")
+    @Operation(summary = "Código para conectar pelo número (admin): digite-o no WhatsApp em Aparelhos conectados > "
+            + "Conectar com número de telefone")
+    PhoneCodeResponse codigoPorTelefone(AdministradorAutenticado administrador, @PathVariable String phone) {
+        return new PhoneCodeResponse(conexao.codigoPorTelefone(phone));
+    }
+
     @GetMapping("/groups")
     @Operation(summary = "Grupos de que o número participa, com o ID para cadastrar como destinatário (admin)")
     List<GroupResponse> grupos(AdministradorAutenticado administrador, @RequestParam(defaultValue = "1") int page,
@@ -61,6 +69,9 @@ class WhatsAppController {
     }
 
     record QrCodeResponse(String image) {
+    }
+
+    record PhoneCodeResponse(String code) {
     }
 
     record GroupResponse(String id, String name) {

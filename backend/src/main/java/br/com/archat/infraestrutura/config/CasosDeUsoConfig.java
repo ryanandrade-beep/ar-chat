@@ -4,40 +4,44 @@ import br.com.archat.aplicacao.administrador.GerenciarAdministradoresUseCase;
 import br.com.archat.aplicacao.atendimento.GerenciarAtendimentoUseCase;
 import br.com.archat.aplicacao.atendimento.ReceberMensagemUseCase;
 import br.com.archat.aplicacao.atendimento.RegistroDeAtendimento;
-import br.com.archat.aplicacao.canal.ListarCanaisUseCase;
-import br.com.archat.aplicacao.mensagem.AtualizarStatusPeloCanalUseCase;
-import br.com.archat.aplicacao.porta.AtendimentoRepositorio;
-import br.com.archat.aplicacao.relatorio.RelatorioAtendimentosUseCase;
 import br.com.archat.aplicacao.autenticacao.AutenticarAdministradorUseCase;
 import br.com.archat.aplicacao.autenticacao.AutenticarClienteUseCase;
 import br.com.archat.aplicacao.campanha.ConsultarCampanhasUseCase;
 import br.com.archat.aplicacao.campanha.DispararCampanhaUseCase;
+import br.com.archat.aplicacao.canal.ListarCanaisUseCase;
 import br.com.archat.aplicacao.cliente.AtualizarClienteUseCase;
 import br.com.archat.aplicacao.cliente.CadastrarClienteUseCase;
 import br.com.archat.aplicacao.cliente.ConsultarClientesUseCase;
 import br.com.archat.aplicacao.cliente.GerenciarFinanceiroUseCase;
 import br.com.archat.aplicacao.cliente.ReiniciarConsumoMensalUseCase;
+import br.com.archat.aplicacao.conta.CadastrarContaUseCase;
+import br.com.archat.aplicacao.conta.RecuperarSenhaUseCase;
 import br.com.archat.aplicacao.conversa.ConsultarConversasUseCase;
 import br.com.archat.aplicacao.destinatario.GerenciarDestinatariosUseCase;
+import br.com.archat.aplicacao.mensagem.AtualizarStatusPeloCanalUseCase;
 import br.com.archat.aplicacao.mensagem.ConfirmarRecebimentoUseCase;
 import br.com.archat.aplicacao.mensagem.ConsultarMensagensUseCase;
 import br.com.archat.aplicacao.mensagem.EnviarMensagemUseCase;
 import br.com.archat.aplicacao.mensagem.ProcessarMensagemUseCase;
 import br.com.archat.aplicacao.mensagem.RecuperarFilaUseCase;
+import br.com.archat.aplicacao.monitoramento.MonitorarFilaUseCase;
 import br.com.archat.aplicacao.porta.AdministradorRepositorio;
+import br.com.archat.aplicacao.porta.AtendimentoRepositorio;
 import br.com.archat.aplicacao.porta.CampanhaRepositorio;
 import br.com.archat.aplicacao.porta.ClienteRepositorio;
 import br.com.archat.aplicacao.porta.CodificadorSenha;
 import br.com.archat.aplicacao.porta.ConexaoWhatsApp;
+import br.com.archat.aplicacao.porta.ContaDeAcessoRepositorio;
 import br.com.archat.aplicacao.porta.ConversaRepositorio;
 import br.com.archat.aplicacao.porta.DestinatarioRepositorio;
+import br.com.archat.aplicacao.porta.EnvioDeEmail;
 import br.com.archat.aplicacao.porta.EnvioMensagemGateway;
 import br.com.archat.aplicacao.porta.MensagemRepositorio;
 import br.com.archat.aplicacao.porta.MetricasFila;
 import br.com.archat.aplicacao.porta.ServicoToken;
 import br.com.archat.aplicacao.porta.TransacaoRepositorio;
 import br.com.archat.aplicacao.porta.UnidadeDeTrabalho;
-import br.com.archat.aplicacao.monitoramento.MonitorarFilaUseCase;
+import br.com.archat.aplicacao.relatorio.RelatorioAtendimentosUseCase;
 import br.com.archat.aplicacao.relatorio.RelatorioCampanhasUseCase;
 import br.com.archat.aplicacao.relatorio.RelatorioFaturamentoUseCase;
 import br.com.archat.aplicacao.whatsapp.GerenciarConexaoWhatsAppUseCase;
@@ -69,8 +73,25 @@ class CasosDeUsoConfig {
 
     @Bean
     AutenticarClienteUseCase autenticarCliente(ClienteRepositorio clientes, ServicoToken tokens, Clock relogio,
-                                               ArChatPropriedades propriedades) {
-        return new AutenticarClienteUseCase(clientes, tokens, relogio, propriedades.token().validade());
+                                               ArChatPropriedades propriedades, ContaDeAcessoRepositorio contas,
+                                               CodificadorSenha codificador) {
+        return new AutenticarClienteUseCase(clientes, tokens, relogio, propriedades.token().validade(), contas,
+                codificador);
+    }
+
+    @Bean
+    CadastrarContaUseCase cadastrarConta(ClienteRepositorio clientes, ContaDeAcessoRepositorio contas,
+                                         CodificadorSenha codificador, ServicoToken tokens,
+                                         UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio,
+                                         ArChatPropriedades propriedades) {
+        return new CadastrarContaUseCase(clientes, contas, codificador, tokens, unidadeDeTrabalho, relogio,
+                propriedades.token().validade());
+    }
+
+    @Bean
+    RecuperarSenhaUseCase recuperarSenha(ContaDeAcessoRepositorio contas, CodificadorSenha codificador,
+                                         EnvioDeEmail email, UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio) {
+        return new RecuperarSenhaUseCase(contas, codificador, email, unidadeDeTrabalho, relogio);
     }
 
     @Bean
@@ -183,8 +204,11 @@ class CasosDeUsoConfig {
 
     @Bean
     GerenciarAtendimentoUseCase gerenciarAtendimento(ConversaRepositorio conversas, AtendimentoRepositorio atendimentos,
-                                                     UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio) {
-        return new GerenciarAtendimentoUseCase(conversas, atendimentos, unidadeDeTrabalho, relogio);
+                                                     UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio,
+                                                     MensagemRepositorio mensagens, DestinatarioRepositorio destinatarios,
+                                                     ConexaoWhatsApp canal) {
+        return new GerenciarAtendimentoUseCase(conversas, atendimentos, unidadeDeTrabalho, relogio, mensagens,
+                destinatarios, canal);
     }
 
     @Bean

@@ -15,6 +15,7 @@ import br.com.archat.dominio.excecao.RecursoNaoEncontradoException;
 import br.com.archat.dominio.excecao.RegraDeNegocioException;
 import br.com.archat.dominio.financeiro.Transacao;
 import br.com.archat.dominio.mensagem.Mensagem;
+import br.com.archat.dominio.mensagem.Midia;
 import br.com.archat.dominio.mensagem.Prioridade;
 
 import java.math.BigDecimal;
@@ -63,7 +64,8 @@ public class EnviarMensagemUseCase {
             Conversa conversa = conversaDoEnvio(comando);
             Cliente cliente = clientes.buscarPorIdParaAtualizacao(comando.clienteId())
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente"));
-            Mensagem mensagem = Mensagem.novaDoCliente(conversa.id(), comando.conteudo(), comando.prioridade(), agora);
+            Mensagem mensagem = Mensagem.novaDoCliente(conversa.id(), null, comando.conteudo(), comando.midia(),
+                    comando.prioridade(), agora);
 
             cliente.cobrar(mensagem.custo());
             conversa.registrar(mensagem);
@@ -100,8 +102,12 @@ public class EnviarMensagemUseCase {
         return agora.plus(tempoEstimadoPorMensagem.multipliedBy(fila.tamanho() + 1L));
     }
 
-    public record Comando(UUID clienteId, UUID conversaId, UUID destinatarioId, String conteudo,
+    public record Comando(UUID clienteId, UUID conversaId, UUID destinatarioId, String conteudo, Midia midia,
                           Prioridade prioridade) {
+
+        public Comando(UUID clienteId, UUID conversaId, UUID destinatarioId, String conteudo, Prioridade prioridade) {
+            this(clienteId, conversaId, destinatarioId, conteudo, null, prioridade);
+        }
     }
 
     public record MensagemEnviada(Mensagem mensagem, BigDecimal disponivel, Instant previsaoEntrega) {

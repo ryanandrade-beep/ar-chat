@@ -7,6 +7,7 @@ import br.com.archat.dominio.excecao.RegraDeNegocioException;
 import br.com.archat.dominio.financeiro.TipoTransacao;
 import br.com.archat.dominio.mensagem.Prioridade;
 import br.com.archat.dominio.mensagem.StatusMensagem;
+import br.com.archat.dominio.mensagem.TipoMidia;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -35,7 +36,12 @@ public final class ApiEnums {
     private ApiEnums() {
     }
 
+    private static final Map<TipoMidia, String> MIDIAS = Map.of(TipoMidia.IMAGEM, "image", TipoMidia.DOCUMENTO,
+            "document", TipoMidia.AUDIO, "audio", TipoMidia.VIDEO, "video");
+
     public static String plano(TipoPlano plano) { return PLANOS.get(plano); }
+    public static String midia(TipoMidia tipo) { return MIDIAS.get(tipo); }
+    public static TipoMidia midia(String valor) { return ler(MIDIAS, valor, "media.type"); }
     public static String prioridade(Prioridade prioridade) { return PRIORIDADES.get(prioridade); }
     public static String status(StatusMensagem status) { return STATUS.get(status); }
     public static String transacao(TipoTransacao tipo) { return TRANSACOES.get(tipo); }

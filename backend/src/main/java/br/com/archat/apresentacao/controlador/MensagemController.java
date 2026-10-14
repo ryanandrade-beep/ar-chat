@@ -5,6 +5,7 @@ import br.com.archat.aplicacao.mensagem.ConsultarMensagensUseCase;
 import br.com.archat.aplicacao.mensagem.EnviarMensagemUseCase;
 import br.com.archat.aplicacao.porta.FiltroMensagens;
 import br.com.archat.apresentacao.dto.ApiEnums;
+import br.com.archat.apresentacao.dto.MensagemDtos.MediaRequest;
 import br.com.archat.apresentacao.dto.MensagemDtos.MessageResponse;
 import br.com.archat.apresentacao.dto.MensagemDtos.MessageStatusResponse;
 import br.com.archat.apresentacao.dto.MensagemDtos.SendMessageRequest;
@@ -44,11 +45,12 @@ class MensagemController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Envia uma mensagem: cobra o valor e coloca na fila (402 se faltar saldo/limite)")
+    @Operation(summary = "Envia uma mensagem de texto ou com mídia (imagem, documento, áudio, vídeo): cobra o valor e coloca na fila (402 se faltar saldo/limite)")
     SendMessageResponse enviar(ClienteAutenticado cliente, @Valid @RequestBody SendMessageRequest r) {
         ApiEnums.exigirCanalDisponivel(r.channel());
         return SendMessageResponse.de(enviar.executar(new EnviarMensagemUseCase.Comando(cliente.id(),
-                r.conversationId(), r.recipientId(), r.content(), ApiEnums.prioridade(r.priority()))));
+                r.conversationId(), r.recipientId(), r.content(), MediaRequest.paraDominio(r.media()),
+                ApiEnums.prioridade(r.priority()))));
     }
 
     @GetMapping

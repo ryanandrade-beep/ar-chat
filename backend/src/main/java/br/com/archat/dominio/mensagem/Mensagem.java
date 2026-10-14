@@ -16,6 +16,7 @@ public class Mensagem {
     private final UUID campanhaId;
     private final Remetente remetente;
     private final String conteudo;
+    private final Midia midia;
     private final Prioridade prioridade;
     private StatusMensagem status;
     private final BigDecimal custo;
@@ -24,14 +25,15 @@ public class Mensagem {
     private final Instant criadaEm;
     private Instant atualizadaEm;
 
-    private Mensagem(UUID id, UUID conversaId, UUID campanhaId, Remetente remetente, String conteudo,
+    private Mensagem(UUID id, UUID conversaId, UUID campanhaId, Remetente remetente, String conteudo, Midia midia,
                      Prioridade prioridade, StatusMensagem status, BigDecimal custo, int tentativas, String idExterno,
                      Instant criadaEm, Instant atualizadaEm) {
         this.id = Objects.requireNonNull(id);
         this.conversaId = Objects.requireNonNull(conversaId);
         this.campanhaId = campanhaId;
         this.remetente = Objects.requireNonNull(remetente);
-        this.conteudo = conteudo;
+        this.conteudo = conteudo == null ? "" : conteudo;
+        this.midia = midia;
         this.prioridade = Objects.requireNonNull(prioridade);
         this.status = Objects.requireNonNull(status);
         this.custo = Objects.requireNonNull(custo);
@@ -47,34 +49,75 @@ public class Mensagem {
 
     public static Mensagem novaDoCliente(UUID conversaId, UUID campanhaId, String conteudo, Prioridade prioridade,
                                          Instant agora) {
-        if (conteudo == null || conteudo.isBlank()) {
-            throw new RegraDeNegocioException("O conteúdo da mensagem é obrigatório");
-        }
-        if (conteudo.length() > TAMANHO_MAXIMO) {
-            throw new RegraDeNegocioException("A mensagem deve ter no máximo " + TAMANHO_MAXIMO + " caracteres");
-        }
+        return novaDoCliente(conversaId, campanhaId, conteudo, null, prioridade, agora);
+    }
+
+    public static Mensagem novaDoCliente(UUID conversaId, UUID campanhaId, String conteudo, Midia midia,
+                                         Prioridade prioridade, Instant agora) {
+        validarConteudo(conteudo, midia);
         if (prioridade == null) {
             throw new RegraDeNegocioException("A prioridade é obrigatória");
         }
-        return new Mensagem(UUID.randomUUID(), conversaId, campanhaId, Remetente.CLIENTE, conteudo.strip(), prioridade,
-                StatusMensagem.ENFILEIRADA, prioridade.custo(), 0, null, agora, agora);
+        return new Mensagem(UUID.randomUUID(), conversaId, campanhaId, Remetente.CLIENTE,
+                conteudo == null ? "" : conteudo.strip(), midia, prioridade, StatusMensagem.ENFILEIRADA,
+                prioridade.custo(), 0, null, agora, agora);
+    }
+
+    public static void validarConteudo(String conteudo, Midia midia) {
+        boolean semTexto = conteudo == null || conteudo.isBlank();
+        if (midia == null && semTexto) {
+            throw new RegraDeNegocioException("O conteúdo da mensagem é obrigatório");
+        }
+        if (midia != null && !midia.tipo().aceitaLegenda() && !semTexto) {
+            throw new RegraDeNegocioException("Mensagens de áudio não aceitam texto (legenda)");
+        }
+        if (conteudo != null && conteudo.length() > TAMANHO_MAXIMO) {
+            throw new RegraDeNegocioException("A mensagem deve ter no máximo " + TAMANHO_MAXIMO + " caracteres");
+        }
     }
 
     public static Mensagem recebidaDoDestinatario(UUID conversaId, String conteudo, String idExterno, Instant quando) {
-        String texto = conteudo == null || conteudo.isBlank() ? "[mensagem sem texto]" : conteudo.strip();
+        return recebidaDoDestinatario(conversaId, conteudo, null, idExterno, quando);
+    }
+
+    public static Mensagem recebidaDoDestinatario(UUID conversaId, String conteudo, Midia midia, String idExterno,
+                                                  Instant quando) {
+        boolean semTexto = conteudo == null || conteudo.isBlank();
+        String texto = semTexto ? (midia == null ? "[mensagem sem texto]" : "") : conteudo.strip();
         if (texto.length() > TAMANHO_MAXIMO) {
             texto = texto.substring(0, TAMANHO_MAXIMO);
         }
-        return new Mensagem(UUID.randomUUID(), conversaId, null, Remetente.DESTINATARIO, texto, Prioridade.NORMAL,
-                StatusMensagem.ENTREGUE, BigDecimal.ZERO.setScale(2), 0, idExterno, quando, quando);
+        return new Mensagem(UUID.randomUUID(), conversaId, null, Remetente.DESTINATARIO, texto, midia,
+                Prioridade.NORMAL, StatusMensagem.ENTREGUE, BigDecimal.ZERO.setScale(2), 0, idExterno, quando, quando);
     }
 
     public static Mensagem reconstituir(UUID id, UUID conversaId, UUID campanhaId, Remetente remetente,
                                         String conteudo, Prioridade prioridade, StatusMensagem status,
                                         BigDecimal custo, int tentativas, String idExterno, Instant criadaEm,
                                         Instant atualizadaEm) {
-        return new Mensagem(id, conversaId, campanhaId, remetente, conteudo, prioridade, status, custo, tentativas,
-                idExterno, criadaEm, atualizadaEm);
+        return reconstituir(id, conversaId, campanhaId, remetente, conteudo, null, prioridade, status, custo,
+                tentativas, idExterno, criadaEm, atualizadaEm);
+    }
+
+    public static Mensagem reconstituir(UUID id, UUID conversaId, UUID campanhaId, Remetente remetente,
+                                        String conteudo, Midia midia, Prioridade prioridade, StatusMensagem status,
+                                        BigDecimal custo, int tentativas, String idExterno, Instant criadaEm,
+                                        Instant atualizadaEm) {
+        return new Mensagem(id, conversaId, campanhaId, remetente, conteudo, midia, prioridade, status, custo,
+                tentativas, idExterno, criadaEm, atualizadaEm);
+    }
+
+    public String resumo() {
+        if (midia == null) {
+            return conteudo;
+        }
+        String rotulo = switch (midia.tipo()) {
+            case IMAGEM -> "[Imagem]";
+            case DOCUMENTO -> "[Documento]";
+            case AUDIO -> "[Áudio]";
+            case VIDEO -> "[Vídeo]";
+        };
+        return conteudo.isBlank() ? rotulo : rotulo + " " + conteudo;
     }
 
     public void iniciarProcessamento(Instant agora) {
@@ -123,6 +166,7 @@ public class Mensagem {
     public UUID campanhaId() { return campanhaId; }
     public Remetente remetente() { return remetente; }
     public String conteudo() { return conteudo; }
+    public Midia midia() { return midia; }
     public Prioridade prioridade() { return prioridade; }
     public StatusMensagem status() { return status; }
     public BigDecimal custo() { return custo; }

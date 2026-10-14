@@ -20,9 +20,14 @@ public class ListarCanaisUseCase {
     }
 
     public List<Canal> listar() {
-        var situacao = conexao.situacao();
+        boolean conectado;
+        try {
+            conectado = conexao.situacao().conectado();
+        } catch (RuntimeException e) {
+            conectado = false;
+        }
         return List.of(
-                new Canal(WHATSAPP_WEB, "WhatsApp Web", "Conexão por QR Code (Z-API)", true, situacao.conectado()),
+                new Canal(WHATSAPP_WEB, "WhatsApp Web", "Conexão por QR Code ou código no telefone", true, conectado),
                 new Canal(WHATSAPP_BUSINESS, "WhatsApp Business API", "API oficial da Meta — em breve", false, false));
     }
 

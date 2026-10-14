@@ -1,5 +1,6 @@
 package br.com.archat.aplicacao.porta;
 
+import br.com.archat.dominio.mensagem.Midia;
 import br.com.archat.dominio.mensagem.Prioridade;
 
 import java.util.UUID;
@@ -12,7 +13,8 @@ public interface EnvioMensagemGateway {
 
     ResultadoEnvio enviar(Envio envio);
 
-    record Envio(UUID mensagemId, String telefone, String conteudo, Prioridade prioridade, int tentativa) {
+    record Envio(UUID mensagemId, String telefone, String conteudo, Midia midia, Prioridade prioridade,
+                 int tentativa) {
     }
 
     record ResultadoEnvio(boolean aceito, String idExterno) {

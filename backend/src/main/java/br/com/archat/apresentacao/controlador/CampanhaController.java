@@ -3,6 +3,7 @@ package br.com.archat.apresentacao.controlador;
 import br.com.archat.aplicacao.campanha.ConsultarCampanhasUseCase;
 import br.com.archat.aplicacao.campanha.DispararCampanhaUseCase;
 import br.com.archat.apresentacao.dto.ApiEnums;
+import br.com.archat.apresentacao.dto.MensagemDtos.MediaRequest;
 import br.com.archat.apresentacao.dto.CampanhaDtos.CampaignCreatedResponse;
 import br.com.archat.apresentacao.dto.CampanhaDtos.CampaignResponse;
 import br.com.archat.apresentacao.dto.CampanhaDtos.CreateCampaignRequest;
@@ -41,7 +42,8 @@ class CampanhaController {
     CampaignCreatedResponse disparar(ClienteAutenticado cliente, @Valid @RequestBody CreateCampaignRequest r) {
         ApiEnums.exigirCanalDisponivel(r.channel());
         return CampaignCreatedResponse.de(disparar.executar(new DispararCampanhaUseCase.Comando(cliente.id(), r.name(),
-                r.content(), ApiEnums.prioridade(r.priority()), r.recipientIds(), r.todosQueAceitam())));
+                r.content(), MediaRequest.paraDominio(r.media()), ApiEnums.prioridade(r.priority()), r.recipientIds(),
+                r.todosQueAceitam())));
     }
 
     @GetMapping

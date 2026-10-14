@@ -1,6 +1,8 @@
 package br.com.archat.infraestrutura.persistencia.entidade;
 
+import br.com.archat.dominio.mensagem.Midia;
 import br.com.archat.dominio.mensagem.Prioridade;
+import br.com.archat.dominio.mensagem.TipoMidia;
 import br.com.archat.dominio.mensagem.Remetente;
 import br.com.archat.dominio.mensagem.StatusMensagem;
 import jakarta.persistence.Column;
@@ -36,6 +38,13 @@ public class MensagemEntity {
     private int tentativas;
     @Column(name = "id_externo")
     private String idExterno;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_midia")
+    private TipoMidia tipoMidia;
+    @Column(name = "url_midia")
+    private String urlMidia;
+    @Column(name = "nome_arquivo")
+    private String nomeArquivo;
     @Column(name = "criada_em")
     private Instant criadaEm;
     @Column(name = "atualizada_em")
@@ -73,4 +82,14 @@ public class MensagemEntity {
     public String getIdExterno() { return idExterno; }
     public Instant getCriadaEm() { return criadaEm; }
     public Instant getAtualizadaEm() { return atualizadaEm; }
+
+    public void definirMidia(Midia midia) {
+        this.tipoMidia = midia == null ? null : midia.tipo();
+        this.urlMidia = midia == null ? null : midia.url();
+        this.nomeArquivo = midia == null ? null : midia.nomeArquivo();
+    }
+
+    public Midia getMidia() {
+        return tipoMidia == null ? null : new Midia(tipoMidia, urlMidia, nomeArquivo);
+    }
 }

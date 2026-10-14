@@ -4,6 +4,7 @@ import br.com.archat.aplicacao.campanha.ConsultarCampanhasUseCase.AndamentoCampa
 import br.com.archat.aplicacao.campanha.DispararCampanhaUseCase.CampanhaDisparada;
 import br.com.archat.dominio.campanha.Campanha;
 import br.com.archat.dominio.mensagem.Mensagem;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -20,8 +21,8 @@ public final class CampanhaDtos {
     }
 
     public record CreateCampaignRequest(@NotBlank @Size(max = 120) String name,
-                                        @NotBlank @Size(max = Mensagem.TAMANHO_MAXIMO) String content,
-                                        @NotBlank String priority, List<UUID> recipientIds, Boolean allOptedIn,
+                                        @Size(max = Mensagem.TAMANHO_MAXIMO) String content,
+                                        @Valid MensagemDtos.MediaRequest media, @NotBlank String priority, List<UUID> recipientIds, Boolean allOptedIn,
                                         String channel) {
 
         public boolean todosQueAceitam() {
@@ -39,14 +40,16 @@ public final class CampanhaDtos {
         }
     }
 
-    public record CampaignResponse(UUID id, String name, String content, String priority, int totalRecipients,
+    public record CampaignResponse(UUID id, String name, String content, MensagemDtos.MediaResponse media,
+                                   String priority, int totalRecipients,
                                    BigDecimal totalCost, Instant createdAt, Map<String, Long> messagesByStatus) {
 
         public static CampaignResponse de(AndamentoCampanha andamento) {
             Campanha c = andamento.campanha();
             Map<String, Long> porStatus = new LinkedHashMap<>();
             andamento.mensagensPorStatus().forEach((status, total) -> porStatus.put(ApiEnums.status(status), total));
-            return new CampaignResponse(c.id(), c.nome(), c.conteudo(), ApiEnums.prioridade(c.prioridade()),
+            return new CampaignResponse(c.id(), c.nome(), c.conteudo(), MensagemDtos.MediaResponse.de(c.midia()),
+                    ApiEnums.prioridade(c.prioridade()),
                     c.totalDestinatarios(), c.custoTotal(), c.criadaEm(), porStatus);
         }
     }

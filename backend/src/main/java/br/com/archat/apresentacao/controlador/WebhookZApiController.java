@@ -4,6 +4,9 @@ import br.com.archat.aplicacao.atendimento.ReceberMensagemUseCase;
 import br.com.archat.aplicacao.excecao.NaoAutenticadoException;
 import br.com.archat.aplicacao.mensagem.AtualizarStatusPeloCanalUseCase;
 import br.com.archat.aplicacao.mensagem.AtualizarStatusPeloCanalUseCase.AvisoDoCanal;
+import br.com.archat.dominio.excecao.RegraDeNegocioException;
+import br.com.archat.dominio.mensagem.Midia;
+import br.com.archat.dominio.mensagem.TipoMidia;
 import br.com.archat.infraestrutura.config.ArChatPropriedades;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -52,9 +55,9 @@ class WebhookZApiController {
         if (Boolean.TRUE.equals(corpo.fromMe()) || !"ReceivedCallback".equals(corpo.type())) {
             return Map.of("ignored", true);
         }
-        String texto = corpo.text() == null ? null : corpo.text().message();
         Instant quando = corpo.momment() == null ? null : Instant.ofEpochMilli(corpo.momment());
-        boolean registrada = receber.doCanal(corpo.phone(), texto, corpo.messageId(), quando).isPresent();
+        boolean registrada = receber.doCanal(corpo.phone(), corpo.textoOuLegenda(), corpo.midia(), corpo.messageId(),
+                quando).isPresent();
         if (!registrada) {
             log.info("Webhook Z-API: mensagem {} de {} ignorada (repetida ou contato não cadastrado)",
                     corpo.messageId(), corpo.phone());
@@ -84,9 +87,44 @@ class WebhookZApiController {
     }
 
     record RecebidaZApi(String type, String messageId, String phone, Boolean fromMe, Boolean isGroup,
-                        Long momment, String senderName, Texto text) {
+                        Long momment, String senderName, Texto text, Imagem image, Audio audio, Video video,
+                        Documento document) {
+
+        String textoOuLegenda() {
+            if (text != null) return text.message();
+            if (image != null) return image.caption();
+            if (video != null) return video.caption();
+            if (document != null) return document.caption();
+            return null;
+        }
+
+        Midia midia() {
+            try {
+                if (image != null && image.imageUrl() != null) return new Midia(TipoMidia.IMAGEM, image.imageUrl(), null);
+                if (audio != null && audio.audioUrl() != null) return new Midia(TipoMidia.AUDIO, audio.audioUrl(), null);
+                if (video != null && video.videoUrl() != null) return new Midia(TipoMidia.VIDEO, video.videoUrl(), null);
+                if (document != null && document.documentUrl() != null) {
+                    return new Midia(TipoMidia.DOCUMENTO, document.documentUrl(), document.fileName());
+                }
+            } catch (RegraDeNegocioException e) {
+                return null;
+            }
+            return null;
+        }
 
         record Texto(String message) {
+        }
+
+        record Imagem(String imageUrl, String caption, String mimeType) {
+        }
+
+        record Audio(String audioUrl, String mimeType) {
+        }
+
+        record Video(String videoUrl, String caption, String mimeType) {
+        }
+
+        record Documento(String documentUrl, String fileName, String title, String caption, String mimeType) {
         }
     }
 

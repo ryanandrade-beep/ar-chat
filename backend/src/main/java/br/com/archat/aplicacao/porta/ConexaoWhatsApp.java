@@ -9,6 +9,10 @@ public interface ConexaoWhatsApp {
 
     String qrCode();
 
+    String codigoPorTelefone(String telefone);
+
+    void marcarComoLida(String telefoneOuGrupo, String idExterno);
+
     void desconectar();
 
     List<GrupoWhatsApp> listarGrupos(int pagina, int tamanhoPagina);
